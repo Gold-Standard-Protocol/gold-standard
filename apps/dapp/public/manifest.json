@@ -1,0 +1,5 @@
+{
+  "name": "Gold Standard",
+  "description": "Borrow GSUSD against tokenised gold held in your own vault.",
+  "iconPath": "favicon.svg"
+}

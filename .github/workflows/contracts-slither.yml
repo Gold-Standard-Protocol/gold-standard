@@ -1,0 +1,67 @@
+name: contracts-slither
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-slither.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-slither.yml"
+
+permissions:
+  contents: read
+  security-events: write
+  # upload-sarif needs actions: read where code scanning is restricted.
+  actions: read
+
+concurrency:
+  group: contracts-slither-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  slither:
+    name: slither static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install contract dependencies
+        working-directory: contracts
+        run: npm ci
+
+      - name: Run Slither
+        id: slither
+        uses: crytic/slither-action@4fd765aeef19915d04ddf0be90c2930036a774d8 # v0.4.1
+        continue-on-error: true
+        with:
+          target: contracts/
+          node-version: "22"
+          slither-config: contracts/slither.config.json
+          fail-on: medium
+          sarif: slither-results.sarif
+
+      # Best-effort: the gate is the findings (next step), never the upload
+      # plumbing. Code scanning ingestion can be unavailable on some plans,
+      # which must not fail the analysis job.
+      - name: Upload SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+
+      - name: Fail on medium+ findings
+        if: steps.slither.outcome == 'failure'
+        run: |
+          echo "Slither reported medium or higher severity findings — see SARIF upload."
+          exit 1

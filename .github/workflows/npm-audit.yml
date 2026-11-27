@@ -1,0 +1,66 @@
+name: npm-audit
+
+on:
+  schedule:
+    # Weekly on Monday 08:00 UTC
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+  # A dependency change must pass the gate before it merges.
+  pull_request:
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "contracts/package.json"
+      - "contracts/package-lock.json"
+      - "tools/audit-gate.mjs"
+      - "tools/audit-gate.test.mjs"
+      - "tools/wallet-dependencies.test.mjs"
+      - "tools/audit-allowlist.json"
+      - ".github/workflows/npm-audit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit-contracts:
+    name: audit contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: npm audit (production)
+        run: npm audit --omit=dev --audit-level=low
+
+  audit-root:
+    name: audit monorepo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Audit gate unit tests
+        run: node --test tools/audit-gate.test.mjs tools/wallet-dependencies.test.mjs
+
+      # The allowlist is empty; policy tests prevent exceptions from returning.
+      # The raw audit below also rejects moderate and low advisories.
+      - name: npm audit gate (production)
+        run: node tools/audit-gate.mjs
+
+      - name: Require zero production advisories
+        run: npm audit --omit=dev --audit-level=low

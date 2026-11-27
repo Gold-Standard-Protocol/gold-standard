@@ -1,0 +1,58 @@
+name: contracts-coverage
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-coverage.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-coverage.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: solidity-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: contracts
+    env:
+      # Measured 98.9% lines / 98.4% branches on 2026-10-21 (786 tests, nonReentrant
+      # whitelisted in .solcover.js). The gate sits a few points under that so a new
+      # function with one untested arm fails CI rather than drifting the figure down.
+      COVERAGE_LINES: "95"
+      COVERAGE_BRANCHES: "95"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run coverage
+        run: npm run coverage
+
+      - name: Enforce coverage threshold
+        run: node scripts/check-coverage.js
+
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: solidity-coverage
+          path: contracts/coverage/

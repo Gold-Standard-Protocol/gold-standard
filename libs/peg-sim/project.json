@@ -1,0 +1,26 @@
+{
+  "name": "peg-sim",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/peg-sim/src",
+  "projectType": "library",
+  "tags": ["scope:research"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/peg-sim",
+        "main": "libs/peg-sim/src/index.ts",
+        "tsConfig": "libs/peg-sim/tsconfig.lib.json",
+        "assets": ["libs/peg-sim/*.md"]
+      }
+    },
+    "grid": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vite-node src/cli.ts",
+        "cwd": "libs/peg-sim"
+      }
+    }
+  }
+}

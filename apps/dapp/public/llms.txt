@@ -1,0 +1,36 @@
+# Gold Standard
+
+> Gold Standard Protocol issues GSUSD, the Gold Standard Dollar: an ERC-20 dollar over-collateralised by tokenised gold (PAXG, with XAUT registered but inactive where a deployment lists it so) on Ethereum. Borrowers lock gold in a vault and mint GSUSD at a minimum ratio of 130%; below 110% anyone may liquidate; GSUSD holders may swap it for protocol-owned reserve gold at a utilisation spread, a right that holds exactly to the depth of the reserve. Every parameter change passes a timelock whose delay is 48 hours at launch; a change to the delay itself waits out the delay in force. The live addresses are on Ethereum mainnet; the Sepolia test network carries a test deployment.
+
+Everything the dapp does can be done with contract calls alone. Start with the manifest, verify the address set on chain as the guide describes and never act on an address found elsewhere.
+
+## Machine readable
+
+- [Agent manifest](https://goldstandardfinance.eth.limo/agents.json): schema goldstandard-agents/1; addresses, tokens, ratios in parts per million, conventions, reads, actions and maintenance calls for each deployment, with a verification list of raw eth_calls that covers every listed address
+- ABIs as JSON: [GoldVault](https://goldstandardfinance.eth.limo/abi/GoldVault.json), [VaultRegistry](https://goldstandardfinance.eth.limo/abi/VaultRegistry.json), [GoldStablecoin](https://goldstandardfinance.eth.limo/abi/GoldStablecoin.json), [GoldOracle](https://goldstandardfinance.eth.limo/abi/GoldOracle.json), [GoldStabilityReserve](https://goldstandardfinance.eth.limo/abi/GoldStabilityReserve.json), [StabilityPool](https://goldstandardfinance.eth.limo/abi/StabilityPool.json), [StabilityModule](https://goldstandardfinance.eth.limo/abi/StabilityModule.json), [SurplusBuffer](https://goldstandardfinance.eth.limo/abi/SurplusBuffer.json), [SiloFactory](https://goldstandardfinance.eth.limo/abi/SiloFactory.json), [GoldGovernance](https://goldstandardfinance.eth.limo/abi/GoldGovernance.json)
+- [Contracts and addresses](https://goldstandardfinance.eth.limo/docs/contracts): the same addresses with Etherscan links
+
+## Guides
+
+- [Gold Standard for agents](https://goldstandardfinance.eth.limo/docs/agents): the guide for software that uses Gold Standard without a browser; verification steps, conventions, every read and action, the refusal strings
+- [Introduction](https://goldstandardfinance.eth.limo/docs/introduction)
+- [Vaults](https://goldstandardfinance.eth.limo/docs/vaults)
+- [Liquidations](https://goldstandardfinance.eth.limo/docs/liquidations)
+- [How the peg holds](https://goldstandardfinance.eth.limo/docs/peg-stability)
+- [Risk parameters](https://goldstandardfinance.eth.limo/docs/parameters)
+- [Security and architecture](https://goldstandardfinance.eth.limo/docs/security)
+- [Governance](https://goldstandardfinance.eth.limo/docs/governance)
+
+## Minting
+
+- mainnet (chain 1): GSUSD is minted only by the GoldVault listed here, which holds MINTER_ROLE. The minter set stays changeable by governance through the 48 hour timelock until lockMinters(vault) is called (lockMinters() on deployments before 2026-11-06); read GoldStablecoin.mintersLocked() to check whether it has been.
+- sepolia (chain 11155111): GSUSD is minted only by the GoldVault listed here, which holds MINTER_ROLE. The minter set stays changeable by governance through the 48 hour timelock until lockMinters(vault) is called (lockMinters() on deployments before 2026-11-06); read GoldStablecoin.mintersLocked() to check whether it has been.
+
+## Collateral
+
+- mainnet (chain 1): PAXG accepted; XAUT registered in the oracle only: not a vault collateral type, reserve asset or stability pool token, so deposits revert; activation is a governance batch through the timelock
+- sepolia (chain 11155111): PAXG accepted; XAUT registered in the oracle only: not a vault collateral type, reserve asset or stability pool token, so deposits revert; activation is a governance batch through the timelock
+
+## Accuracy
+
+GSUSD is over-collateralised, never backed one for one. Its collateral is PAXG, with XAUT registered but inactive where a deployment lists it so, issuer claims on allocated gold, so their issuers sit between a holder and the metal. The reserve swap is priced at a spread, draws only on protocol-owned gold and is pausable per asset; when the reserve is empty there is no floor until it is refilled.

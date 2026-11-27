@@ -1,0 +1,65 @@
+name: app-ci
+
+on:
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'tools/**'
+      - 'package*.json'
+      - '*config*'
+      - 'nx.json'
+      - 'jest.preset.js'
+      - '.github/workflows/app-ci.yml'
+  push:
+    branches: [main, dev]
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+      - 'tools/**'
+      - 'package*.json'
+      - '*config*'
+      - 'nx.json'
+      - 'jest.preset.js'
+      - '.github/workflows/app-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NX_DAEMON: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Dapp and shared unit tests
+        run: npx vitest run
+      - name: API, keeper, backend and Nx plugin unit tests
+        run: npx jest --runInBand --projects apps/api apps/keeper libs/trpc tools/plugin
+      # vitest and the vite build transpile without type-checking,
+      # so the dapp and the vite libraries were never type-checked in CI, and nothing ran
+      # ESLint. Contracts lint (solhint) runs in contracts-lint.yml with its own install.
+      - name: Type-check and lint
+        run: npx nx run-many -t typecheck lint --exclude=@goldstandard/contracts
+      # The agent quickstart and ABI sync tools have node:test suites of their own, which
+      # no other workflow runs (npm-audit.yml names only its own two files).
+      - name: Tools unit tests
+        run: node --test tools/*.test.mjs
+      # A dapp build must name its chain, and a Sepolia build needs the deployment's PAXG mock.
+      - name: Production app builds
+        env:
+          VITE_TARGET_CHAIN_ID: '11155111'
+        run: |
+          export VITE_PAXG_ADDRESS="$(node -p "require('./contracts/deployments/sepolia.json').config.paxgToken")"
+          npx nx run-many --target=build --projects=dapp,api,keeper

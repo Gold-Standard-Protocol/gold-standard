@@ -1,0 +1,496 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Gold Dollar design tokens: the "clean institutional" light theme (DESIGN.md).
+ * Warm paper canvas, white surfaces, deep ink text and an antique-gold accent.
+ * Status colours (success / warning / danger) are tuned for legibility on light.
+ */
+@layer base {
+	:root {
+		--font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+		--font-serif: 'Fraunces', 'Fraunces Fallback', ui-serif, Georgia, 'Times New Roman', serif;
+		--font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+		/* Surfaces */
+		--background: 40 33% 98%;
+		--foreground: 40 14% 12%;
+
+		--card: 0 0% 100%;
+		--card-foreground: 40 14% 12%;
+
+		--popover: 0 0% 100%;
+		--popover-foreground: 40 14% 12%;
+
+		--muted: 40 22% 95%;
+		--muted-foreground: 40 7% 42%;
+		/* Secondary text on the tinted callout fills: 4.5:1 or better on the danger fill (#fceded), where --muted-foreground is 4.45:1. */
+		--muted-foreground-strong: 40 7% 38%;
+
+		--border: 40 17% 89%;
+		/* Control boundaries at 3:1 against white and paper (WCAG 1.4.11); cards keep the softer --border. */
+		--input: 40 10% 54%;
+		--input-invalid: 0 72% 51%;
+
+		/* Antique gold accent (#8a6a1d) */
+		--primary: 41 65% 32%;
+		--primary-foreground: 40 33% 98%;
+
+		--secondary: 40 22% 94%;
+		--secondary-foreground: 40 14% 18%;
+
+		--accent: 41 40% 92%;
+		--accent-foreground: 40 14% 18%;
+
+		--destructive: 0 66% 47%;
+		--destructive-foreground: 40 33% 98%;
+		--foreground-destructive: 0 66% 42%;
+
+		/* Semantic status */
+		--success: 152 46% 30%;
+		--success-foreground: 152 60% 96%;
+		--success-soft: 152 40% 94%;
+
+		--warning: 33 78% 32%;
+		--warning-foreground: 33 70% 96%;
+		--warning-soft: 38 75% 93%;
+
+		--danger: 0 66% 47%;
+		--danger-foreground: 0 70% 97%;
+		--danger-soft: 0 72% 96%;
+
+		--ring: 41 65% 38%;
+
+		--radius: 0.625rem;
+
+		/* Fluid type scale (rem + vw, capped under 2.5x for WCAG 1.4.4). The
+		 * rem term preserves zoom; the display step drives the hero headline. */
+		--step-display: clamp(2.85rem, 1.9rem + 4.2vw, 4.6rem);
+		--step-title: clamp(2rem, 1.5rem + 1.7vw, 2.6rem);
+	}
+}
+
+@layer base {
+	* {
+		border-color: hsl(var(--border));
+	}
+
+	html {
+		-webkit-text-size-adjust: 100%;
+		font-feature-settings: 'ss01';
+		scroll-padding-top: 5rem;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
+	}
+
+	body {
+		background-color: hsl(var(--background));
+		color: hsl(var(--foreground));
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+	}
+
+	::selection {
+		background-color: hsl(41 55% 50% / 0.22);
+		color: hsl(var(--foreground));
+	}
+	::-moz-selection {
+		background-color: hsl(41 55% 50% / 0.22);
+		color: hsl(var(--foreground));
+	}
+
+	/* One engraved focus ring across the app; never remove outlines. */
+	:focus-visible {
+		outline: 2px solid hsl(var(--ring));
+		outline-offset: 3px;
+		border-radius: 2px;
+	}
+
+	input,
+	textarea {
+		caret-color: hsl(var(--primary));
+	}
+
+	/* Tabular, lining figures for everything that reports numbers. */
+	.nums {
+		font-variant-numeric: tabular-nums lining-nums;
+		font-feature-settings: 'tnum', 'lnum';
+	}
+
+	.font-serif {
+		font-family: var(--font-serif);
+		font-optical-sizing: auto;
+	}
+
+	.font-mono {
+		font-family: var(--font-mono);
+	}
+
+	/* Subtle, institutional scrollbar. */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: hsl(var(--border)) transparent;
+	}
+	*::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	*::-webkit-scrollbar-thumb {
+		background-color: hsl(var(--border));
+		border-radius: 9999px;
+		border: 3px solid hsl(var(--background));
+	}
+}
+
+/* One orchestrated entrance for page content. */
+@layer utilities {
+	@keyframes gd-rise {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.animate-rise {
+		animation: gd-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-rise {
+			animation: none;
+		}
+	}
+
+	/* Struck-gold gradient for a single emphasised display word. */
+	.text-gold-gradient {
+		background-image: linear-gradient(
+			100deg,
+			hsl(41 60% 44%),
+			hsl(38 72% 52%) 45%,
+			hsl(41 55% 34%)
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+
+	/* A 44px hit area for inline text controls (Max links, small toggles) whose visual size
+	 * must stay small: the pseudo-element takes the tap, the text keeps the layout. */
+	.tap-target {
+		position: relative;
+	}
+	.tap-target::after {
+		content: '';
+		position: absolute;
+		inset: -0.875rem -0.5rem;
+	}
+
+	/* Soft gold glow for primary calls to action. */
+	.shadow-gold {
+		box-shadow: 0 1px 2px hsl(41 65% 20% / 0.18),
+			0 12px 28px -12px hsl(41 65% 32% / 0.5);
+	}
+
+	/* Material primitives, the "struck gold / private mint" language: guilloche engraving,
+	 * fine grain, specular gold and registration marks give surfaces a minted feel. */
+
+	/* Engine-turned guilloché, the engraved rosette on coins + banknotes,
+	 * layered from repeating radial + conic gradients. Sits faintly over
+	 * dark grounds. */
+	.bg-guilloche {
+		background-image:
+			repeating-radial-gradient(
+				circle at 50% 50%,
+				hsl(41 70% 55% / 0.08) 0 1px,
+				transparent 1px 9px
+			),
+			repeating-conic-gradient(
+				from 0deg at 50% 50%,
+				hsl(41 70% 55% / 0.05) 0deg 0.6deg,
+				transparent 0.6deg 5deg
+			);
+	}
+
+	/* Printed grain, fractal noise as a tiled data-URI. Applied to a dedicated
+	 * overlay layer (a child div) so it never collides with ::after utilities.
+	 * `multiply` on a light ground reads as fine certificate-paper tooth. */
+	.grain {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+		background-size: 150px 150px;
+		opacity: 0.035;
+		mix-blend-mode: multiply;
+	}
+
+	/* A struck-gold hairline, thin rule that fades from the gold accent. */
+	.gold-hairline {
+		height: 1px;
+		background-image: linear-gradient(
+			90deg,
+			transparent,
+			hsl(41 60% 50% / 0.55) 28%,
+			hsl(41 72% 58% / 0.85) 50%,
+			hsl(41 60% 50% / 0.55) 72%,
+			transparent
+		);
+	}
+
+	/* Specular gold leaf for an emphasised display word, richer than the
+	 * flat gradient, with a moving highlight under .animate-sheen-text. */
+	.text-gold-leaf {
+		background-image: linear-gradient(
+			95deg,
+			hsl(38 58% 34%) 0%,
+			hsl(41 70% 44%) 28%,
+			hsl(44 82% 56%) 47%,
+			hsl(41 70% 42%) 63%,
+			hsl(38 58% 32%) 100%
+		);
+		background-size: 220% 100%;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+
+	/* The hero gold line sits in Fraunces's display setting from the first paint. It used to
+	 * animate in from a softer, wider setting, which pushed its last word onto a new line
+	 * and back on every load, so the hero has no load animation (project decision,
+	 * 2026-11-17). */
+	.headline-gold {
+		font-variation-settings: 'opsz' 132, 'wght' 600;
+	}
+
+	/* Each headline line is its own block. */
+	.line-mask {
+		display: block;
+	}
+	.line-inner {
+		display: block;
+	}
+
+	/* Sweeping specular highlight, for the primary CTA + the coin. */
+	@keyframes bz-sheen {
+		0% {
+			transform: translateX(-120%) skewX(-18deg);
+		}
+		60%,
+		100% {
+			transform: translateX(220%) skewX(-18deg);
+		}
+	}
+	.sheen {
+		position: relative;
+		overflow: hidden;
+		isolation: isolate;
+	}
+	.sheen::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: linear-gradient(
+			100deg,
+			transparent 30%,
+			hsl(0 0% 100% / 0.35) 50%,
+			transparent 70%
+		);
+		transform: translateX(-120%) skewX(-18deg);
+	}
+	.sheen:hover::after {
+		animation: bz-sheen 0.9s ease-out;
+	}
+
+	/* Continuous marquee for the live gold-price ticker. */
+	@keyframes bz-marquee {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(-50%);
+		}
+	}
+	.animate-marquee {
+		animation: bz-marquee 55s linear infinite;
+	}
+
+	/* The tape rests when a reader hovers, focuses within it or presses Pause. */
+	.ticker:hover .animate-marquee,
+	.ticker:focus-within .animate-marquee,
+	.ticker[data-paused] .animate-marquee {
+		animation-play-state: paused;
+	}
+
+	/* Decorative motion respects reduced motion. */
+	@media (prefers-reduced-motion: reduce) {
+		.animate-marquee {
+			animation: none !important;
+		}
+	}
+
+
+	/* Machine-truth voice, mono small caps for prices, ratios, labels */
+	.label-mono {
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		font-feature-settings: 'zero' 1, 'tnum';
+	}
+
+	/* Editorial link underline that draws in from the leading edge */
+	.link-underline {
+		background-image: linear-gradient(
+			hsl(var(--primary) / 0.9),
+			hsl(var(--primary) / 0.9)
+		);
+		background-repeat: no-repeat;
+		background-position: 0% 100%;
+		background-size: 0% 1.5px;
+		padding-bottom: 2px;
+		transition: background-size 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.link-underline:hover,
+	.link-underline:focus-visible {
+		background-size: 100% 1.5px;
+	}
+
+	/* Typographic status mark (replaces coloured pill + dot) */
+	.status-mark {
+		display: inline-flex;
+		flex-direction: column;
+		gap: 4px;
+		align-items: flex-start;
+	}
+	.status-mark > span:last-child {
+		height: 1px;
+		width: 100%;
+		background-image: linear-gradient(
+			90deg,
+			hsl(41 65% 50% / 0.9),
+			hsl(41 65% 50% / 0)
+		);
+	}
+}
+
+/*
+ * Documentation typography. Doc pages wrap content in `.doc-prose` and write
+ * semantic HTML; these rules give it the institutional Gold Standard voice without a
+ * typography plugin. Headings carry scroll-margin so anchor jumps clear the
+ * sticky header.
+ */
+@layer components {
+	.doc-prose {
+		color: hsl(var(--foreground) / 0.92);
+		font-size: 1rem;
+		line-height: 1.75;
+	}
+
+	.doc-prose > :first-child {
+		margin-top: 0;
+	}
+
+	.callout-body {
+		color: hsl(var(--muted-foreground-strong));
+	}
+
+	.doc-prose p {
+		margin-block: 1.1rem;
+	}
+
+	.doc-prose h2 {
+		font-family: var(--font-serif);
+		font-size: 1.6rem;
+		line-height: 1.25;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+		color: hsl(var(--foreground));
+		margin-top: 3rem;
+		margin-bottom: 1rem;
+		scroll-margin-top: 6rem;
+	}
+
+	.doc-prose h3 {
+		font-family: var(--font-serif);
+		font-size: 1.2rem;
+		line-height: 1.35;
+		font-weight: 600;
+		color: hsl(var(--foreground));
+		margin-top: 2rem;
+		margin-bottom: 0.6rem;
+		scroll-margin-top: 6rem;
+	}
+
+	.doc-prose ul,
+	.doc-prose ol {
+		margin-block: 1.1rem;
+		padding-left: 1.3rem;
+	}
+
+	.doc-prose ul {
+		list-style: disc;
+	}
+
+	.doc-prose ol {
+		list-style: decimal;
+	}
+
+	.doc-prose li {
+		margin-block: 0.4rem;
+		padding-left: 0.2rem;
+	}
+
+	.doc-prose li::marker {
+		color: hsl(var(--primary) / 0.7);
+	}
+
+	.doc-prose a {
+		color: hsl(var(--primary));
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		text-decoration-thickness: 1px;
+		font-weight: 500;
+	}
+
+	.doc-prose a:hover {
+		color: hsl(var(--primary) / 0.8);
+	}
+
+	.doc-prose strong {
+		font-weight: 600;
+		color: hsl(var(--foreground));
+	}
+
+	.doc-prose code {
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		background-color: hsl(var(--muted));
+		border: 1px solid hsl(var(--border));
+		border-radius: 6px;
+		padding: 0.1rem 0.35rem;
+		/* A long call signature breaks inside the line at phone width instead of pushing the page sideways. */
+		overflow-wrap: anywhere;
+	}
+
+	.doc-prose hr {
+		margin-block: 2.5rem;
+		border: 0;
+		border-top: 1px solid hsl(var(--border));
+	}
+
+	.doc-prose blockquote {
+		margin-block: 1.5rem;
+		padding-left: 1rem;
+		border-left: 2px solid hsl(var(--primary) / 0.35);
+		color: hsl(var(--muted-foreground));
+		font-style: italic;
+	}
+}

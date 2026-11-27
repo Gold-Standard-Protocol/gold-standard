@@ -1,0 +1,4 @@
+{
+  "$comment": "No production advisory exceptions. The wallet migration removes legacy Zod, and CI also requires a clean raw production audit.",
+  "advisories": []
+}

@@ -1,0 +1,40 @@
+# Foundry coexists with Hardhat here.
+# - Hardhat tests live in ./test (mocha + ethers).
+# - Foundry tests live in ./test-foundry (forge-std + invariants + fuzz).
+# Remappings point at node_modules so we reuse the existing OpenZeppelin /
+# Chainlink installs instead of maintaining a second dependency tree.
+
+[profile.default]
+src              = "src"
+out              = "forge-out"
+libs             = ["lib", "node_modules"]
+test             = "test-foundry"
+cache_path       = "forge-cache"
+solc_version     = "0.8.38"
+evm_version      = "cancun"
+via_ir           = true
+optimizer        = true
+optimizer_runs   = 200
+gas_reports      = ["GoldVault", "GoldOracle", "GoldStabilityReserve", "StabilityPool"]
+fs_permissions   = [{ access = "read", path = "./"}]
+
+[fuzz]
+runs     = 1000
+max_test_rejects = 200000
+
+[invariant]
+runs                = 128
+depth               = 200
+fail_on_revert      = false
+call_override       = false
+dictionary_weight   = 80
+include_storage     = true
+include_push_bytes  = true
+
+[profile.ci]
+# Deeper than local, but bounded: 512x500 invariant runs took over six hours
+# on a GitHub runner and hit the job timeout. 256x200 is roughly 2x the local
+# workload and finishes in minutes; the workflow also carries timeout-minutes
+# so a hang fails fast instead of burning the runner.
+fuzz = { runs = 5000, max_test_rejects = 500000 }
+invariant = { runs = 256, depth = 200, fail_on_revert = false }

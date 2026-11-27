@@ -1,0 +1,10 @@
+{
+  "detectors_to_exclude": "naming-convention,assembly,low-level-calls",
+  "filter_paths": "node_modules|src/test|research/mocks|@openzeppelin|@chainlink",
+  "exclude_informational": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false,
+  "disable_color": true,
+  "compile_force_framework": "hardhat"
+}

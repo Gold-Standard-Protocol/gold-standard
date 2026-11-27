@@ -1,0 +1,34 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2022",
+    "module": "esnext",
+    "esModuleInterop": true,
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@goldstandard/constants": ["libs/constants/src/index.ts"],
+      "@goldstandard/hooks": ["libs/hooks/src/index.ts"],
+      "@goldstandard/models": ["libs/models/src/index.ts"],
+      "@goldstandard/plugin": ["tools/plugin/src/index.ts"],
+      "@goldstandard/trpc": ["libs/trpc/src/index.ts"],
+      "@goldstandard/trpc/keeper": ["libs/trpc/src/lib/keeper/index.ts"],
+      "@goldstandard/trpc/ledger-export": ["libs/trpc/src/lib/ledger/exportCli.ts"],
+      "@goldstandard/trpc-react": ["libs/trpc-react/src/index.ts"],
+      "@goldstandard/ui": ["libs/ui/src/index.ts"],
+      "@goldstandard/utils": ["libs/utils/src/index.ts"],
+      "@goldstandard/peg-sim": ["libs/peg-sim/src/index.ts"]
+    },
+    "strict": true
+  },
+  "exclude": ["node_modules", "tmp"]
+}

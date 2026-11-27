@@ -1,0 +1,42 @@
+name: contracts-lint
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-lint.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-lint.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  solhint:
+    name: solhint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Solhint
+        run: npm run lint

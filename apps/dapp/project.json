@@ -1,0 +1,81 @@
+{
+  "name": "dapp",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/dapp/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/dapp"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "dapp:build",
+        "port": 3000,
+        "proxyConfig": "apps/dapp/proxy.conf.json"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dapp:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "dapp:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "dapp:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dapp:build:development"
+        },
+        "production": {
+          "buildTarget": "dapp:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/apps/dapp"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "../../coverage/apps/dapp"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/dapp/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "start": {
+      "executor": "@goldstandard/plugin:start",
+      "options": {
+        "frontendProject": "dapp",
+        "backendProject": "api"
+      }
+    }
+  }
+}

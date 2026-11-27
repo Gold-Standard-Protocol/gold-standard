@@ -1,0 +1,95 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+dist
+tmp
+/out-tsc
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+
+# All env variants: any of these can carry KEEPER_PRIVATE_KEY or RPC secrets.
+.env
+.env.*
+!.env.example
+!.env.mainnet.example
+
+# Operator-local key material and key-derived files: never part of the repository.
+apps/keeper/.keeper-address
+*.pem
+*.key
+credentials.json
+.venv*/
+
+# Hardhat
+contracts/artifacts
+contracts/cache
+contracts/typechain-types
+
+# Foundry
+contracts/forge-out
+contracts/forge-cache
+contracts/lib
+contracts/broadcast
+
+# Local deployment runs (keep mainnet/sepolia snapshots under version control)
+contracts/deployments/localhost.json
+contracts/deployments/hardhat.json
+contracts/deployments/unknown.json
+contracts/deployments/e2e.json
+contracts/deployments/localhost.preflight.json
+contracts/deployments/hardhat.preflight.json
+contracts/deployments/unknown.preflight.json
+contracts/deployments/e2e.preflight.json
+# The deploy journal of an interrupted local run (docs/MAINNET.md section 2 forces one).
+# mainnet.inprogress.json and sepolia.inprogress.json stay visible on purpose.
+contracts/deployments/localhost.inprogress.json
+contracts/deployments/hardhat.inprogress.json
+contracts/deployments/unknown.inprogress.json
+contracts/deployments/e2e.inprogress.json
+
+# Coverage
+contracts/coverage
+contracts/coverage.json
+contracts/gas-report.txt
+
+# Local ceremony-rehearsal snapshot (throwaway chain, regenerated on demand)
+contracts/deployments/localhost.json
+libs/peg-sim/out/
+
+.nx/polygraph
+.nx/self-healing
+.nx/migrate-runs

@@ -1,0 +1,99 @@
+name: dapp-e2e
+
+# The suite boots a chain, the API and the dapp, so it runs only
+# when something it exercises changes; a documentation-only change starts nothing.
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "apps/**"
+      - "libs/**"
+      - "tools/**"
+      - "contracts/src/**"
+      - "contracts/scripts/**"
+      - "contracts/hardhat.config.ts"
+      - "contracts/package*.json"
+      - "package*.json"
+      - "*config*"
+      - "nx.json"
+      - ".github/workflows/dapp-e2e.yml"
+  pull_request:
+    paths:
+      - "apps/**"
+      - "libs/**"
+      - "tools/**"
+      - "contracts/src/**"
+      - "contracts/scripts/**"
+      - "contracts/hardhat.config.ts"
+      - "contracts/package*.json"
+      - "package*.json"
+      - "*config*"
+      - "nx.json"
+      - ".github/workflows/dapp-e2e.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dapp-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: dapp end-to-end on a local chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Install contracts dependencies
+        run: npm ci
+        working-directory: contracts
+
+      # Same key as contracts-ci, so a compile either workflow already did is restored here.
+      - name: Restore compiled artifacts
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            contracts/cache
+            contracts/artifacts
+            contracts/typechain-types
+          key: hardhat-artifacts-${{ hashFiles('contracts/src/**', 'contracts/research/**', 'contracts/hardhat.config.ts', 'contracts/package-lock.json') }}
+
+      - name: Compile contracts
+        run: npx hardhat compile
+        working-directory: contracts
+
+      # The bootstrap starts the node, deploys, seeds, funds the wallet, builds and starts
+      # the API against Redis above, starts the dapp, and Playwright drives the installed
+      # Chrome. The wallet is the node's own account, so no secret is involved.
+      - name: Run the dapp end-to-end suite
+        run: npx nx e2e dapp-e2e
+        env:
+          CI: "true"
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dapp-e2e-report
+          path: dist/.playwright/dapp-e2e
+          retention-days: 7

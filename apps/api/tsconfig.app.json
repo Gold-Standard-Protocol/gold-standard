@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "outDir": "../../dist/out-tsc",
+    // es2020 (not commonjs) so the typecheck accepts `import.meta` reached transitively via
+    // @goldstandard/constants (goldVault.ts). esbuild controls the actual cjs output for the node target.
+    "module": "es2020",
+    "types": ["node", "express"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "buildTarget": "api:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "api:build:development"
+        },
+        "production": {
+          "buildTarget": "api:build:production"
+        }
+      }
+    },
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "main": "apps/api/src/main.ts",
+        "outputPath": "dist/apps/api",
+        "outputFileName": "main.js",
+        "tsConfig": "apps/api/tsconfig.app.json",
+        "assets": [],
+        "platform": "node"
+      },
+      "configurations": {
+        "development": {
+          "minify": false
+        },
+        "production": {
+          "minify": true
+        }
+      }
+    },
+    "build-ledger-export": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "main": "apps/api/src/exportLedger.ts",
+        "outputPath": "dist/apps/api-ledger-export",
+        "outputFileName": "exportLedger.js",
+        "tsConfig": "apps/api/tsconfig.app.json",
+        "assets": [],
+        "platform": "node",
+        "minify": false
+      }
+    }
+  }
+}

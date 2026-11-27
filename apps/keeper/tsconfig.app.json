@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "outDir": "../../dist/out-tsc",
+    // es2020 to match apps/api and avoid a config snowflake. The keeper
+    // deliberately does NOT import @goldstandard/constants (keeper-local parseAbi
+    // definitions instead), so it does not need api's import.meta workaround;
+    // a future import of @goldstandard/constants here signals a layering violation.
+    "module": "es2020",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

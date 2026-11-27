@@ -1,0 +1,14 @@
+{
+  "/trpc": {
+    "target": "http://localhost:3333",
+    "secure": false
+  },
+  "/usage-ledger.csv": {
+    "target": "http://localhost:3333",
+    "secure": false
+  },
+  "/usage-ledger.json": {
+    "target": "http://localhost:3333",
+    "secure": false
+  }
+}

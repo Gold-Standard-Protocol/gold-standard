@@ -1,0 +1,76 @@
+name: contracts-ci
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-ci.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile-and-test:
+    name: compile + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The viaIR compile is the slowest step. Hardhat's own cache
+      # recompiles any source whose content or compiler settings changed, so a restored set is
+      # safe; typechain-types is cached with it because Hardhat regenerates types only for the
+      # contracts it compiles, and the tests import them.
+      - name: Restore compiled artifacts
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            contracts/cache
+            contracts/artifacts
+            contracts/typechain-types
+          key: hardhat-artifacts-${{ hashFiles('contracts/src/**', 'contracts/research/**', 'contracts/hardhat.config.ts', 'contracts/package-lock.json') }}
+
+      - name: Compile
+        run: npm run compile
+
+      # Hardhat only transpiles, so the launch scripts would otherwise never be
+      # type-checked. This checks hardhat.config.ts, scripts/, tools/ and test/ against the
+      # typechain-types the compile just generated.
+      - name: Type-check scripts and tests
+        run: npm run typecheck
+
+      # One run of the suite: on a pull request the gas reporter rides along and writes
+      # gas-report.txt, instead of a second job compiling and running the whole suite again.
+      - name: Run Hardhat tests
+        run: npm test
+        env:
+          REPORT_GAS: ${{ github.event_name == 'pull_request' }}
+          GAS_REPORT_FILE: ${{ github.event_name == 'pull_request' && 'gas-report.txt' || '' }}
+
+      - name: Upload gas report
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gas-report
+          path: contracts/gas-report.txt

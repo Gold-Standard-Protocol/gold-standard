@@ -1,0 +1,50 @@
+# Response headers for hosts that honour this file (Cloudflare Pages, Netlify). The one
+# rule that matters is script-src 'self': no script may run on this page unless it was in
+# the published build. Everything else is permissive enough for wallets and RPCs.
+# connect-src and img-src stay broad (https:, wss:, data:, blob:) because wallet providers
+# and WalletConnect relays, and the RPC endpoint a user configures in their wallet, are
+# origins this file cannot know in advance. index.html carries the same policy in a meta
+# tag (minus frame-ancestors) for the IPFS and ENS route, where no header can be set.
+# Framing: only the Safe{Wallet} web app may embed the dapp, as a Safe App (project decision,
+# 30 October 2026). The Safe connector trusts messages from that origin alone. There is no
+# X-Frame-Options header: it cannot name an allowed origin, and frame-ancestors governs
+# framing in every current browser.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://verify.walletconnect.com https://verify.walletconnect.org https://secure.walletconnect.com https://secure.walletconnect.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors https://app.safe.global; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The two files agents fetch from other origins: readable cross-origin, revalidated often.
+/agents.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
+/llms.txt
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
+# Safe{Wallet} reads the Safe App manifest cross-origin before it frames the dapp; these are
+# the headers Safe documents for it.
+/manifest.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET
+  Access-Control-Allow-Headers: X-Requested-With, content-type, Authorization
+  Cache-Control: public, max-age=300
+
+# The contract ABIs agents fetch alongside the manifest, on the same policy.
+/abi/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
+# The entry document is the one file whose name never changes, so it must be revalidated or a
+# visitor keeps a page pointing at hashed assets a newer deploy has removed.
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache

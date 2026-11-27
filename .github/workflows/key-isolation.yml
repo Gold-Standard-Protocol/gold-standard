@@ -1,0 +1,68 @@
+name: key-isolation
+
+# Proves two structural guarantees on every PR:
+# 1. The public API bundle cannot read KEEPER_PRIVATE_KEY.
+# 2. The keeper bundle does not drag in the BullMQ price worker (which would
+#    open an unwanted Redis connection in the signing process).
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: key-isolation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  key-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx nx build api && npx nx build keeper
+      # grep exits 1 for no match and 2 for a missing or
+      # unreadable file, and `|| true` used to treat both as a pass, so a bundle that moved
+      # passed without being scanned. A missing or empty bundle and any grep error now fail.
+      - name: API bundle must not reference KEEPER_PRIVATE_KEY
+        run: |
+          bundle=dist/apps/api/main.js
+          if [ ! -s "$bundle" ]; then
+            echo "$bundle is missing or empty; nothing was scanned" >&2
+            exit 1
+          fi
+          status=0
+          count=$(grep -c KEEPER_PRIVATE_KEY "$bundle") || status=$?
+          if [ "$status" -gt 1 ]; then
+            echo "Could not scan $bundle (grep exit $status)" >&2
+            exit 1
+          fi
+          if [ "$count" -gt 0 ]; then
+            echo "KEEPER_PRIVATE_KEY leaked into the API bundle (${count} references)" >&2
+            exit 1
+          fi
+      - name: Keeper bundle must not contain the BullMQ price worker
+        run: |
+          bundle=dist/apps/keeper/main.js
+          if [ ! -s "$bundle" ]; then
+            echo "$bundle is missing or empty; nothing was scanned" >&2
+            exit 1
+          fi
+          status=0
+          count=$(grep -cE 'bullmq|initPriceUpdateWorker|schedulePriceUpdate' "$bundle") || status=$?
+          if [ "$status" -gt 1 ]; then
+            echo "Could not scan $bundle (grep exit $status)" >&2
+            exit 1
+          fi
+          if [ "$count" -gt 0 ]; then
+            echo "Keeper bundle pulled in the price worker or BullMQ (${count} references)" >&2
+            exit 1
+          fi

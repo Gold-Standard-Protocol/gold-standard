@@ -1,0 +1,5 @@
+# RFC 9116. Keep the contact mailbox live and move Expires forward every year.
+Contact: mailto:security@goldstandard.finance
+Expires: 2027-10-31T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://goldstandard.finance/.well-known/security.txt

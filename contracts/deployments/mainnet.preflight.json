@@ -1,0 +1,460 @@
+{
+  "schema": "goldstandard-preflight/1",
+  "network": "mainnet",
+  "chainId": 1,
+  "deployer": "0x78a4586Ba99045eaEBae03ba5624d7f55dDEa584",
+  "deployerNonce": 0,
+  "createdAt": "2026-11-27T10:30:52.006Z",
+  "chainTime": 1795775447,
+  "safes": [
+    {
+      "role": "proposer",
+      "address": "0x767B21Ba106aa1A01aCBEAb42eFa57776584f71c",
+      "threshold": "2",
+      "owners": [
+        "0xa4Bd5a5F4960Fbe4d2Fb0Ab18BFb13D17616d73F",
+        "0xE9dDc4c2eA94d58bF648C391a465782694281f94",
+        "0x31BFd8Bc623E56bf15a3eb618A619811AA111A83"
+      ]
+    },
+    {
+      "role": "executor",
+      "address": "0x7ACfb50588D92c5Bb8311c3758A67dfbD528e03A",
+      "threshold": "2",
+      "owners": [
+        "0xFD7E31D03D923B6D8a28c898817471E9a4C0EEBe",
+        "0xe9818a0fB101d671E5226bc4A9cA8d8E57F74023",
+        "0x02A94746F1b5a70C27cfB3B3B2d54e0522979De7"
+      ]
+    },
+    {
+      "role": "guardian",
+      "address": "0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3",
+      "threshold": "2",
+      "owners": [
+        "0xdaf13aeAC1e19d9b03d06444825D63ED0A97775e",
+        "0x0284a2f3CF9F8b38d1F7Ce127d2FA6bB436A917F",
+        "0x8bfD57Dda2e8B9868Dc01b8a4b7944C5Ad616f88"
+      ]
+    }
+  ],
+  "operationsSafe": "0xa30072Ad3E6B5A62ba86655128985D40cb681a5f",
+  "parametersHash": "0xe9b7fb2266be769a69a355074333e75a989423ca03377fcca1d6b556d081e852",
+  "parameters": {
+    "BAD_DEBT_PAUSE_THRESHOLD": "25000000000000000000000",
+    "LAUNCH_CAPS": "open",
+    "MIN_COLLATERAL_RESERVE": "0",
+    "MIN_DEBT_WEI": "1000000000000000000000",
+    "MIN_GSUSD_RESERVE": "0",
+    "ORIGINATION_FEE_BPS": "5",
+    "PAXG_BACKSTOP_MAX": "not applicable",
+    "PAXG_DEBT_CEILING": "unlimited",
+    "PAXG_FEED": "0x9944D86CEB9160aF5C5feB251FD671923323f8C3",
+    "PAXG_GOLD_BAND_PPM": "20000",
+    "PAXG_LIQUIDATION_CLAMP_PPM": "20000",
+    "PAXG_LIQ_PENALTY": "50000",
+    "PAXG_LIQ_RATIO": "1100000",
+    "PAXG_MIN_RATIO": "1300000",
+    "PAXG_STABILITY_FEE_BPS": "200",
+    "PAXG_TOKEN": "0x45804880De22913dAFE09f4980848ECE6EcbAf78",
+    "PER_BLOCK_MINT_CAP": "0",
+    "RESERVE_AGGREGATE_DAILY_CAP_USD": "0",
+    "RESERVE_DAILY_CAP_PPM": "200000",
+    "RESERVE_MIN_RESERVE_PAXG": "0",
+    "RESERVE_MIN_RESERVE_XAUT": "not applied (XAUT dormant)",
+    "RESERVE_PENALTY_SHARE_BPS": "4000",
+    "SILO_CAP": "100000000000000000000",
+    "SILO_LOCK_VAULT_ROLE": "true",
+    "STALENESS_THRESHOLD": "90000",
+    "TIMELOCK_EXECUTOR": "0x7ACfb50588D92c5Bb8311c3758A67dfbD528e03A",
+    "TIMELOCK_GUARDIAN": "0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3",
+    "TIMELOCK_PROPOSER": "0x767B21Ba106aa1A01aCBEAb42eFa57776584f71c",
+    "UNDERWATER_DISCOUNT_PPM": "20000",
+    "XAUT_DEBT_CEILING": "not applied (XAUT dormant)",
+    "XAUT_FEED": "an InactiveFeed deployed by deploy.ts",
+    "XAUT_LIQ_PENALTY": "not applied (XAUT dormant)",
+    "XAUT_LIQ_RATIO": "not applied (XAUT dormant)",
+    "XAUT_MIN_RATIO": "not applied (XAUT dormant)",
+    "XAUT_STABILITY_FEE_BPS": "not applied (XAUT dormant)",
+    "XAUT_STATUS": "dormant (oracle entry only)",
+    "XAUT_TOKEN": "0x68749665FF8D2d112Fa859AA293F07A622782F38",
+    "XAU_USD_ANCHOR_FEED": "0x214eD9Da11D2fbe465a6fc601a91E62EbEc1a0D6"
+  },
+  "findings": [
+    {
+      "name": "env:PRIVATE_KEY",
+      "verdict": "pass",
+      "detail": "deployer 0x78a4586Ba99045eaEBae03ba5624d7f55dDEa584"
+    },
+    {
+      "name": "env:OPERATIONS_SAFE",
+      "verdict": "pass",
+      "detail": "0xa30072Ad3E6B5A62ba86655128985D40cb681a5f"
+    },
+    {
+      "name": "policy:LAUNCH_CAPS",
+      "verdict": "pass",
+      "detail": "open: the mainnet launch profile; no debt ceiling and no per-block mint cap, PAXG the only active collateral, XAUT registered in the oracle and otherwise dormant"
+    },
+    {
+      "name": "policy:PAXG_DEBT_CEILING",
+      "verdict": "pass",
+      "detail": "unlimited: the open launch has no PAXG debt ceiling"
+    },
+    {
+      "name": "policy:PER_BLOCK_MINT_CAP",
+      "verdict": "pass",
+      "detail": "0: the per-block mint cap is off under the open launch"
+    },
+    {
+      "name": "policy:MIN_GSUSD_RESERVE",
+      "verdict": "pass",
+      "detail": "0 at deploy: the 2% reserve floor is automatic in SurplusBuffer"
+    },
+    {
+      "name": "policy:MIN_DEBT_GSUSD",
+      "verdict": "pass",
+      "detail": "1000.0 GSUSD: the figure the mainnet launch opens at"
+    },
+    {
+      "name": "policy:TIMELOCK_EXECUTOR",
+      "verdict": "pass",
+      "detail": "restricted: only the executor Safe and the GoldGovernance wrapper execute matured operations"
+    },
+    {
+      "name": "policy:STALENESS_THRESHOLD",
+      "verdict": "pass",
+      "detail": "90000 s (25 h)"
+    },
+    {
+      "name": "param:BAD_DEBT_PAUSE_THRESHOLD",
+      "verdict": "pass",
+      "detail": "25000000000000000000000"
+    },
+    {
+      "name": "param:LAUNCH_CAPS",
+      "verdict": "pass",
+      "detail": "open"
+    },
+    {
+      "name": "param:MIN_COLLATERAL_RESERVE",
+      "verdict": "pass",
+      "detail": "0"
+    },
+    {
+      "name": "param:MIN_DEBT_WEI",
+      "verdict": "pass",
+      "detail": "1000000000000000000000"
+    },
+    {
+      "name": "param:MIN_GSUSD_RESERVE",
+      "verdict": "pass",
+      "detail": "0"
+    },
+    {
+      "name": "param:ORIGINATION_FEE_BPS",
+      "verdict": "pass",
+      "detail": "5"
+    },
+    {
+      "name": "param:PAXG_BACKSTOP_MAX",
+      "verdict": "pass",
+      "detail": "not applicable"
+    },
+    {
+      "name": "param:PAXG_DEBT_CEILING",
+      "verdict": "pass",
+      "detail": "unlimited"
+    },
+    {
+      "name": "param:PAXG_FEED",
+      "verdict": "pass",
+      "detail": "0x9944D86CEB9160aF5C5feB251FD671923323f8C3"
+    },
+    {
+      "name": "param:PAXG_GOLD_BAND_PPM",
+      "verdict": "pass",
+      "detail": "20000"
+    },
+    {
+      "name": "param:PAXG_LIQUIDATION_CLAMP_PPM",
+      "verdict": "pass",
+      "detail": "20000"
+    },
+    {
+      "name": "param:PAXG_LIQ_PENALTY",
+      "verdict": "pass",
+      "detail": "50000"
+    },
+    {
+      "name": "param:PAXG_LIQ_RATIO",
+      "verdict": "pass",
+      "detail": "1100000"
+    },
+    {
+      "name": "param:PAXG_MIN_RATIO",
+      "verdict": "pass",
+      "detail": "1300000"
+    },
+    {
+      "name": "param:PAXG_STABILITY_FEE_BPS",
+      "verdict": "pass",
+      "detail": "200"
+    },
+    {
+      "name": "param:PAXG_TOKEN",
+      "verdict": "pass",
+      "detail": "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
+    },
+    {
+      "name": "param:PER_BLOCK_MINT_CAP",
+      "verdict": "pass",
+      "detail": "0"
+    },
+    {
+      "name": "param:RESERVE_AGGREGATE_DAILY_CAP_USD",
+      "verdict": "pass",
+      "detail": "0"
+    },
+    {
+      "name": "param:RESERVE_DAILY_CAP_PPM",
+      "verdict": "pass",
+      "detail": "200000"
+    },
+    {
+      "name": "param:RESERVE_MIN_RESERVE_PAXG",
+      "verdict": "pass",
+      "detail": "0"
+    },
+    {
+      "name": "param:RESERVE_MIN_RESERVE_XAUT",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:RESERVE_PENALTY_SHARE_BPS",
+      "verdict": "pass",
+      "detail": "4000"
+    },
+    {
+      "name": "param:SILO_CAP",
+      "verdict": "pass",
+      "detail": "100000000000000000000"
+    },
+    {
+      "name": "param:SILO_LOCK_VAULT_ROLE",
+      "verdict": "pass",
+      "detail": "true"
+    },
+    {
+      "name": "param:STALENESS_THRESHOLD",
+      "verdict": "pass",
+      "detail": "90000"
+    },
+    {
+      "name": "param:TIMELOCK_EXECUTOR",
+      "verdict": "pass",
+      "detail": "0x7ACfb50588D92c5Bb8311c3758A67dfbD528e03A"
+    },
+    {
+      "name": "param:TIMELOCK_GUARDIAN",
+      "verdict": "pass",
+      "detail": "0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3"
+    },
+    {
+      "name": "param:TIMELOCK_PROPOSER",
+      "verdict": "pass",
+      "detail": "0x767B21Ba106aa1A01aCBEAb42eFa57776584f71c"
+    },
+    {
+      "name": "param:UNDERWATER_DISCOUNT_PPM",
+      "verdict": "pass",
+      "detail": "20000"
+    },
+    {
+      "name": "param:XAUT_DEBT_CEILING",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:XAUT_FEED",
+      "verdict": "pass",
+      "detail": "an InactiveFeed deployed by deploy.ts"
+    },
+    {
+      "name": "param:XAUT_LIQ_PENALTY",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:XAUT_LIQ_RATIO",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:XAUT_MIN_RATIO",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:XAUT_STABILITY_FEE_BPS",
+      "verdict": "pass",
+      "detail": "not applied (XAUT dormant)"
+    },
+    {
+      "name": "param:XAUT_STATUS",
+      "verdict": "pass",
+      "detail": "dormant (oracle entry only)"
+    },
+    {
+      "name": "param:XAUT_TOKEN",
+      "verdict": "pass",
+      "detail": "0x68749665FF8D2d112Fa859AA293F07A622782F38"
+    },
+    {
+      "name": "param:XAU_USD_ANCHOR_FEED",
+      "verdict": "pass",
+      "detail": "0x214eD9Da11D2fbe465a6fc601a91E62EbEc1a0D6"
+    },
+    {
+      "name": "chain",
+      "verdict": "pass",
+      "detail": "chain 1"
+    },
+    {
+      "name": "inventory:PAXG_TOKEN",
+      "verdict": "pass",
+      "detail": "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
+    },
+    {
+      "name": "inventory:XAUT_TOKEN",
+      "verdict": "pass",
+      "detail": "0x68749665FF8D2d112Fa859AA293F07A622782F38"
+    },
+    {
+      "name": "inventory:PAXG_FEED",
+      "verdict": "pass",
+      "detail": "0x9944D86CEB9160aF5C5feB251FD671923323f8C3"
+    },
+    {
+      "name": "inventory:XAU_USD_ANCHOR_FEED",
+      "verdict": "pass",
+      "detail": "0x214eD9Da11D2fbe465a6fc601a91E62EbEc1a0D6"
+    },
+    {
+      "name": "token:PAXG",
+      "verdict": "pass",
+      "detail": "PAXG, 18 decimals, 0x45804880De22913dAFE09f4980848ECE6EcbAf78"
+    },
+    {
+      "name": "token:XAUT",
+      "verdict": "pass",
+      "detail": "XAUt, 6 decimals, 0x68749665FF8D2d112Fa859AA293F07A622782F38"
+    },
+    {
+      "name": "feed:XAU_USD_ANCHOR_FEED",
+      "verdict": "pass",
+      "detail": "\"XAU / USD\" $3670.18 updated 1584 s ago"
+    },
+    {
+      "name": "feed:PAXG_FEED",
+      "verdict": "pass",
+      "detail": "\"PAXG / USD\" $3665.81851348 updated 5256 s ago"
+    },
+    {
+      "name": "market:PAXG",
+      "verdict": "pass",
+      "detail": "PAXG_FEED is a PAXG market source, not the XAU/USD reference"
+    },
+    {
+      "name": "gold-band:PAXG",
+      "verdict": "pass",
+      "detail": "Chainlink PAXG/USD and XAU/USD sit 0.119% apart; the band is 2.000%"
+    },
+    {
+      "name": "recovery:PAXG",
+      "verdict": "pass",
+      "detail": "guardian 0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3 may freeze PAXG and unfreeze it once a normal read succeeds (Chainlink PAXG/USD and XAU/USD both healthy); while either is unhealthy nothing prices, and liquidation resumes by itself once both answer"
+    },
+    {
+      "name": "xaut:dormant",
+      "verdict": "pass",
+      "detail": "XAUT will be registered in the oracle on an InactiveFeed that deploy.ts creates, and nothing else: no collateral type, stability fee, reserve asset or stability pool token, so it prices nothing and deposits revert. Activation is a later governance batch (docs/LAUNCH.md, XAUT activation)"
+    },
+    {
+      "name": "pyth:excluded",
+      "verdict": "pass",
+      "detail": "no configured feed is a PythMarketFeed"
+    },
+    {
+      "name": "twap:excluded",
+      "verdict": "pass",
+      "detail": "no configured feed is a UniswapV3TwapFeed"
+    },
+    {
+      "name": "safe:proposer",
+      "verdict": "pass",
+      "detail": "2-of-3 at 0x767B21Ba106aa1A01aCBEAb42eFa57776584f71c"
+    },
+    {
+      "name": "safe:executor",
+      "verdict": "pass",
+      "detail": "2-of-3 at 0x7ACfb50588D92c5Bb8311c3758A67dfbD528e03A"
+    },
+    {
+      "name": "safe:guardian",
+      "verdict": "pass",
+      "detail": "2-of-3 at 0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3"
+    },
+    {
+      "name": "safe:role-split",
+      "verdict": "pass",
+      "detail": "proposer, executor and guardian are different addresses"
+    },
+    {
+      "name": "safe:distinct",
+      "verdict": "pass",
+      "detail": "proposer, executor, guardian and deployer are all different addresses"
+    },
+    {
+      "name": "safe:operations",
+      "verdict": "pass",
+      "detail": "2-of-3 at 0xa30072Ad3E6B5A62ba86655128985D40cb681a5f"
+    },
+    {
+      "name": "safe:operations-distinct",
+      "verdict": "pass",
+      "detail": "the operations Safe is none of the proposer, executor and guardian Safes, nor the deployer"
+    },
+    {
+      "name": "safe:deployer-not-owner",
+      "verdict": "pass",
+      "detail": "the deployer is not an owner of any Safe"
+    },
+    {
+      "name": "safe:signer-overlap",
+      "verdict": "pass",
+      "detail": "no signer sits on two of the Safes"
+    },
+    {
+      "name": "deployer:fresh",
+      "verdict": "pass",
+      "detail": "0x78a4586Ba99045eaEBae03ba5624d7f55dDEa584 has never sent a transaction"
+    },
+    {
+      "name": "deployer:balance",
+      "verdict": "pass",
+      "detail": "balance 0.097755 ETH; ceremony about 31724323 gas at 0.119285399 gwei, 0.004730310658824846 ETH with a 25% margin"
+    },
+    {
+      "name": "snapshot",
+      "verdict": "pass",
+      "detail": "no deployment snapshot yet"
+    },
+    {
+      "name": "gsusd:address",
+      "verdict": "pass",
+      "detail": "GSUSD will stand at 0x24C3597eF975bdB565fd146f61438Ef14e15601D: the deployer's transaction at nonce 0 creates the GoldStablecoinDeployer at 0x89D3da6da9BD48411060205709185f990A5D7Ec0, and the salt with the token's creation code (hash 0x317f52e85e3e09dd24f391002fa8ba72cf171de2af49efd426bcbc66c8d1e17f) gives 0x24C3597eF975bdB565fd146f61438Ef14e15601D"
+    }
+  ]
+}

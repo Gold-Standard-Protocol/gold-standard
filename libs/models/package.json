@@ -1,0 +1,12 @@
+{
+  "name": "@goldstandard/models",
+  "version": "0.0.1",
+  "dependencies": {
+    "@uniswap/sdk-core": "^5.8.1",
+    "tslib": "^2.3.0"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
+  "private": true
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      The primary route is IPFS or ENS, where no response header can be set, so the page
+      carries its own policy. It mirrors public/_headers except frame-ancestors, which a
+      meta tag cannot express (the header copy limits framing to the Safe web app on HTTP hosts).
+      On every host, src/app/frameGuard.tsx renders no app under any parent but Safe{Wallet}.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src https://verify.walletconnect.com https://verify.walletconnect.org https://secure.walletconnect.com https://secure.walletconnect.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+    />
+    <title>Gold Standard · Gold-backed stablecoin · Mint GSUSD against tokenised gold</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#fbfaf6" />
+    <meta name="color-scheme" content="light" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://goldstandard.finance/" />
+
+    <meta
+      name="description"
+      content="Gold Standard lets you deposit tokenised gold (PAXG at launch, with XAUT to follow once activated) and mint GSUSD, the Gold Standard Dollar: a stablecoin over-collateralised by tokenised gold and convertible to protocol-owned gold through the Stability Reserve."
+    />
+    <meta name="author" content="Gold Standard" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Gold Standard" />
+    <meta property="og:url" content="https://goldstandard.finance/" />
+    <meta property="og:title" content="Gold Standard · The dollar, back on the gold standard" />
+    <meta
+      property="og:description"
+      content="GSUSD is the Gold Standard Dollar, a stablecoin backed by more gold than it issues. Lock tokenised gold, mint GSUSD and convert it to protocol-owned gold through the Stability Reserve."
+    />
+    <meta property="og:image" content="https://goldstandard.finance/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Gold Standard. The dollar, back on the gold standard. GSUSD, a stablecoin over-collateralised by tokenised gold."
+    />
+    <meta property="og:locale" content="en_GB" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gold Standard · The dollar, back on the gold standard" />
+    <meta
+      name="twitter:description"
+      content="GSUSD is the Gold Standard Dollar, a stablecoin over-collateralised by tokenised gold and convertible to protocol-owned gold through the Stability Reserve."
+    />
+    <meta name="twitter:image" content="https://goldstandard.finance/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Gold Standard. The dollar, back on the gold standard. GSUSD, a stablecoin over-collateralised by tokenised gold."
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Typefaces are self-hosted (src/fonts.css): the page loads no third-party origin. -->
+    <!-- The two faces above the fold are fetched before the stylesheet asks for them, so the
+         first paint is already in the right type. -->
+    <link rel="preload" href="/fonts/fraunces-normal-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/hanken-grotesk-normal-400-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/src/fonts.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://goldstandard.finance/#organization",
+            "name": "Gold Standard Protocol",
+            "url": "https://goldstandard.finance/",
+            "description": "Gold Standard Protocol issues GSUSD, the Gold Standard Dollar: a stablecoin over-collateralised by tokenised gold and convertible to protocol-owned gold through the Stability Reserve.",
+            "logo": "https://goldstandard.finance/logo-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://goldstandard.finance/#website",
+            "url": "https://goldstandard.finance/",
+            "name": "Gold Standard",
+            "publisher": { "@id": "https://goldstandard.finance/#organization" },
+            "inLanguage": "en-GB"
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

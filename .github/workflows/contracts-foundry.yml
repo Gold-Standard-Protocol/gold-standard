@@ -1,0 +1,69 @@
+name: contracts-foundry
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-foundry.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/contracts-foundry.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-foundry-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  foundry:
+    name: forge test (fuzz + invariant)
+    runs-on: ubuntu-latest
+    # Hard stop well below the 6h runner ceiling: a hung invariant run should
+    # fail fast, not exhaust the job allowance.
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: contracts
+    env:
+      FOUNDRY_PROFILE: ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: contracts/package-lock.json
+
+      # node_modules is where remappings.txt points @openzeppelin/ and
+      # @chainlink/ — we need them on disk before forge can resolve imports.
+      - name: Install npm deps
+        run: npm ci
+
+      # Pinned to a release rather than "stable" so a toolchain change cannot move the
+      # fuzz and invariant results under a green commit; bump deliberately.
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          version: v1.8.6
+
+      # forge-std is the only git-based dependency we need, and contracts/lib is
+      # git-ignored, so this step is its only source. Pinned to the commit the v1.9.4
+      # tag names, because a tag can be moved. No --no-commit flag: current Foundry
+      # removed it (not committing is now the default behaviour).
+      - name: Install forge-std
+        run: forge install foundry-rs/forge-std@1eea5bae12ae557d589f9f0f0edae2faa47cb262 # v1.9.4
+
+      - name: forge build
+        run: forge build --sizes
+
+      # No forge snapshot step: it re-runs the entire fuzz + invariant suite
+      # (twice on a check miss) purely to record gas, which doubled the job
+      # past its timeout. Gas regression tracking lives in the contracts-ci
+      # gas report, and gas snapshots over fuzz suites are noisy anyway.
+      - name: forge test
+        run: forge test -vvv

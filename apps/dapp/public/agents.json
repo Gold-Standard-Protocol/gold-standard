@@ -1,0 +1,634 @@
+{
+  "schema": "goldstandard-agents/1",
+  "generatedAt": "2026-11-27T11:22:56.842Z",
+  "source": {
+    "site": "https://goldstandardfinance.eth.limo",
+    "guide": "https://goldstandardfinance.eth.limo/docs/agents",
+    "abis": {
+      "GoldVault": "https://goldstandardfinance.eth.limo/abi/GoldVault.json",
+      "VaultRegistry": "https://goldstandardfinance.eth.limo/abi/VaultRegistry.json",
+      "GoldStablecoin": "https://goldstandardfinance.eth.limo/abi/GoldStablecoin.json",
+      "GoldOracle": "https://goldstandardfinance.eth.limo/abi/GoldOracle.json",
+      "GoldStabilityReserve": "https://goldstandardfinance.eth.limo/abi/GoldStabilityReserve.json",
+      "StabilityPool": "https://goldstandardfinance.eth.limo/abi/StabilityPool.json",
+      "StabilityModule": "https://goldstandardfinance.eth.limo/abi/StabilityModule.json",
+      "SurplusBuffer": "https://goldstandardfinance.eth.limo/abi/SurplusBuffer.json",
+      "SiloFactory": "https://goldstandardfinance.eth.limo/abi/SiloFactory.json",
+      "GoldGovernance": "https://goldstandardfinance.eth.limo/abi/GoldGovernance.json"
+    }
+  },
+  "token": {
+    "symbol": "GSUSD",
+    "name": "Gold Standard Dollar",
+    "decimals": 18,
+    "permit": true,
+    "minter": "GoldVault holds MINTER_ROLE on every network; networks.<chainId>.minting says whether the minter set is locked, and GoldStablecoin.mintersLocked() is the live answer"
+  },
+  "conventions": {
+    "ratioUnit": "parts per million; 1000000 is 100%",
+    "priceDecimals": 8,
+    "priceQuote": "USD per whole token",
+    "gsusdDecimals": 18,
+    "collateralAmounts": "in the token's own decimals; read decimals() from the token",
+    "debtIncludesAccruedFee": true,
+    "repayCapsAtCurrentDebt": true,
+    "liquidateWithZeroRepaysInFull": true,
+    "underwaterLiquidatesInFull": true,
+    "registryHookGasFloor": 375000,
+    "pauseExpiresAfterSeconds": 1209600,
+    "governanceDelaySeconds": 172800
+  },
+  "reads": {
+    "openVaults": "VaultRegistry.vaultOwnerCount() and vaultOwners(offset, limit)",
+    "vault": "VaultRegistry.vaultSummary(owner): token, collateral, debt, ratio (ppm, max uint when debt-free), liquidationPrice, liquidatable",
+    "liquidatable": "VaultRegistry.isLiquidatable(owner) and liquidatableVaults(offset, limit) are hints at the last known price and can miss a vault in a quiet falling market. The liquidation test itself: collateral * 10^(18 - token decimals) * GoldOracle.quoteTokenPrice(token) / 1e8 * 1e6 / GoldVault.getVaultCurrentDebt(owner) < liquidationRatio",
+    "currentDebt": "GoldVault.getVaultCurrentDebt(owner), fee included",
+    "price": "GoldOracle.quoteTokenPrice(token) (liquidation: the higher of the Chainlink market price and Chainlink XAU/USD, at most the liquidation cap above gold), quoteBorrowPrice(token) (minting and indebted withdrawals: the lower of the two, only inside the gold band) and quoteReservePrice(token) (reserve swaps: the higher of the two, only inside the gold band) are the prices the protocol acts on; each reverts when its rule gives none, and all of them revert while either Chainlink feed is stale. getValidatedPrice(token) returns the Chainlink market feed's own read as (price, ok)",
+    "frozen": "GoldOracle.tokenFrozen(token): true while the token is frozen. The guardian or governance freezes it (freezeToken) and lifts it (guardianUnfreezeToken(token, freezeEpoch(token)), only once a normal read succeeds; the number names the freeze and every freezeToken call takes a new one, a re-freeze of a frozen token included, so an unfreeze approved before the latest freezeToken cannot lift it); nobody else can. The freeze lapses at frozenUntil(token), at most 14 days after it was last set. While frozen every price the protocol acts on refuses the token, and so does every liquidation, during a pause as well",
+    "collateralType": "VaultRegistry.collateralTypeOf(token): minRatio, liquidationRatio, liquidationPenalty, debtCeiling, totalDebt, active",
+    "swapQuote": "GoldStabilityReserve.quoteGoldOut(token, gsusdIn) returns (goldOut, spreadPpm) at the spread tier the swap itself pays; (0, 0) means the swap would be refused (asset unsupported or paused, or no reserve price from the oracle). It does not apply the floor or the daily caps: bound the size with remainingDailyCapacity(token), which is 0 whenever a swap would be refused, and redeemableCollateral(token)",
+    "stabilityFee": "StabilityModule.stabilityFeeRate(VaultRegistry.collateralIdOf(token)): the per-second rate as an 18 decimal multiplier (1e18 is zero); debt grows by it every second",
+    "originationFee": "GoldVault.originationFeeBps(): taken from what a mint delivers unless originationFeeExempt(account); debt rises by the full amount minted",
+    "mintCapacity": "the most a mint may add: collateral value at GoldOracle.quoteBorrowPrice(token) * 1e6 / minRatio, less GoldVault.getVaultCurrentDebt(owner), and within debtCeiling - totalDebt where a ceiling is set",
+    "pool": "StabilityPool.getEffectiveDeposit(user), getCollateralGain(user, token), getTotalDeposits()",
+    "paused": "paused() and pauseExpiresAt() on GoldVault, GoldOracle, StabilityPool; GoldStabilityReserve.assetPaused(token) for one reserve asset, which lapses by itself at assets(token).pausedUntil, at most 14 days after the guardian last paused it",
+    "mintersLocked": "GoldStablecoin.mintersLocked(): true once the minter set can never change again",
+    "governanceDelay": "TimelockController.getMinDelay(): the delay in force in seconds. conventions.governanceDelaySeconds is the launch value; the delay changes only through a timelock call to updateDelay that first waits out the delay in force; CallScheduled announces it in advance and MinDelayChange records it when it executes"
+  },
+  "actions": {
+    "openVault": "token.approve(vault, amount); GoldVault.deposit(token, amount); GoldVault.mint(gsusd)",
+    "repay": "GSUSD.approve(vault, amount); GoldVault.repay(amount), which caps at the current debt. The fee accrues every second, so for a full repayment approve and pass the debt plus a small margin (the vault takes only the debt at execution), then reset the allowance to zero. Paying the accrued fee needs GSUSD beyond what was minted",
+    "withdraw": "GoldVault.withdraw(amount) in the collateral token's decimals; a withdrawal to zero closes the vault only once the debt is repaid in full",
+    "liquidate": "GSUSD.approve(vault, debt plus a small margin for the fee accruing until inclusion); GoldVault.liquidate(owner, 0) repays in full, or pass a partial amount. Between 100% and 100% plus the penalty a partial is taken pro rata; an underwater vault (below 100%) accepts only a full liquidation",
+    "liquidateViaPool": "GoldVault.liquidateViaPool(owner, 0); the StabilityPool pays, the caller receives 30% of the penalty in the collateral token. Runs while the vault is paused, priced by the emergency rule; never for a frozen token",
+    "emergencyLiquidate": "GoldVault.emergencyLiquidate(owner, debtToRepay); runs only while the vault or the oracle is paused, and never for a frozen token",
+    "poolDeposit": "GSUSD.approve(pool, amount); StabilityPool.deposit(amount); withdraw(amount) and claimCollateral(token) in a later block than the caller's latest deposit",
+    "swapForGold": "GSUSD.approve(reserve, gsusdIn); GoldStabilityReserve.swapGsusdForGold(token, gsusdIn, minGoldOut)"
+  },
+  "maintenance": [
+    {
+      "call": "VaultRegistry.sync(owner) or syncMany(owners)",
+      "when": "a VaultRegistrySyncFailed event shows a listing drifted"
+    },
+    {
+      "call": "GoldOracle.getTokenPrice(token)",
+      "when": "permissionless: re-anchors the token's last known price, which the ratio views and the registry's hints read (it never prices a seizure); call it when that price is older than the views should rely on"
+    },
+    {
+      "call": "unpauseExpired() on a paused contract",
+      "when": "pauseExpiresAt() has passed"
+    },
+    {
+      "call": "GoldVault.retryBadDebtAbsorption()",
+      "when": "GoldVault.totalBadDebt() is above zero and SurplusBuffer.gsusdBalance() is above zero again; the buffer counts only the fees the vault banks, never a plain GSUSD transfer"
+    },
+    {
+      "call": "SiloFactory.createSilos(token, count)",
+      "when": "SiloFactory.missingSilos(token) is above zero, which happens only after governance moved the deposit cursor: creates the silos the next deposit would otherwise create itself, at most 16 a call. Read missingSilos(token) before every call and stop at 0: the call reverts when nothing is missing, and for an address the factory does not know"
+    },
+    {
+      "call": "StabilityModule.accrueInterest(collateralId)",
+      "when": "optional: brings the fee accumulator up to date; every read already projects the fee to now, so no position depends on it"
+    }
+  ],
+  "networks": {
+    "1": {
+      "chainId": 1,
+      "name": "mainnet",
+      "status": "mainnet",
+      "explorer": "https://etherscan.io",
+      "deployBlock": 26505970,
+      "deployedAt": "2026-11-27T10:42:25.707Z",
+      "governanceTransferred": true,
+      "addresses": {
+        "oracle": "0x143BC7D142A64ed2dD3465078cc3F8d0868C1E2a",
+        "stablecoin": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+        "stabilityModule": "0x13dBf5247e20dc161D4a624614F1be06C34eeA40",
+        "vault": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+        "surplusBuffer": "0x6AeCb57061f93c35cDc03Da94fCBaB8b9A9DD108",
+        "stabilityPool": "0x3321892E1c6bA9cccC5eCF68663BCfbb9233DC71",
+        "reserve": "0x506297A1d0Bbca1cf2Ad0B2AeE2896f922C71387",
+        "siloFactory": "0x455BE3ee69C001088Ab2A51bf5A70081574e8699",
+        "vaultRegistry": "0x98a9e7Ed7e5b1DcABfa34aC5BE7B98a9c388BB00",
+        "governance": "0x3625df35654E817c475655d87d097A5026C5200C",
+        "timelock": "0xBEaEd7bacD53EB4c37bbbD0fBD7276a825D04D4c"
+      },
+      "collateral": [
+        {
+          "symbol": "PAXG",
+          "token": "0x45804880De22913dAFE09f4980848ECE6EcbAf78",
+          "decimals": 18,
+          "minRatioPpm": 1300000,
+          "liquidationRatioPpm": 1100000,
+          "liquidationPenaltyPpm": 50000,
+          "debtCeiling": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+          "stabilityFeeBps": 200
+        },
+        {
+          "symbol": "XAUT",
+          "token": "0x68749665FF8D2d112Fa859AA293F07A622782F38",
+          "decimals": 6,
+          "minRatioPpm": 0,
+          "liquidationRatioPpm": 0,
+          "liquidationPenaltyPpm": 0,
+          "debtCeiling": "0",
+          "stabilityFeeBps": 0,
+          "active": false,
+          "note": "registered in the oracle only: not a vault collateral type, reserve asset or stability pool token, so deposits revert; activation is a governance batch through the timelock"
+        }
+      ],
+      "parameters": {
+        "minDebt": "1000000000000000000000",
+        "underwaterDiscountPpm": 20000,
+        "originationFeeBps": 5,
+        "oracleStalenessSeconds": 90000,
+        "reserveDailyCapPpm": 200000
+      },
+      "minting": {
+        "minter": "GoldVault",
+        "note": "GSUSD is minted only by the GoldVault listed here, which holds MINTER_ROLE. The minter set stays changeable by governance through the 48 hour timelock until lockMinters(vault) is called (lockMinters() on deployments before 2026-11-06); read GoldStablecoin.mintersLocked() to check whether it has been."
+      },
+      "verification": [
+        {
+          "check": "GoldStablecoin: the vault holds MINTER_ROLE",
+          "address": "stablecoin",
+          "to": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+          "data": "0x91d148549f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a60000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin.decimals() is 18",
+          "address": "stablecoin",
+          "to": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+          "data": "0x313ce567",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000012"
+        },
+        {
+          "check": "GoldVault.stablecoin() is the GSUSD token",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0xe9cbd822",
+          "result": "0x00000000000000000000000024c3597ef975bdb565fd146f61438ef14e15601d"
+        },
+        {
+          "check": "GoldVault.oracle() is the oracle",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0x7dc0d1d0",
+          "result": "0x000000000000000000000000143bc7d142a64ed2dd3465078cc3f8d0868c1e2a"
+        },
+        {
+          "check": "GoldVault.stabilityModule() is the stability module",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0xea061ad4",
+          "result": "0x00000000000000000000000013dbf5247e20dc161d4a624614f1be06c34eea40"
+        },
+        {
+          "check": "GoldVault.stabilityPool() is the pool",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0x048c661d",
+          "result": "0x0000000000000000000000003321892e1c6ba9cccc5ecf68663bcfbb9233dc71"
+        },
+        {
+          "check": "GoldVault.surplusBuffer() is the surplus buffer",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0x2a608d5b",
+          "result": "0x0000000000000000000000006aecb57061f93c35cdc03da94fcbab8b9a9dd108"
+        },
+        {
+          "check": "GoldVault.stabilityReserve() is the reserve",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0xd6cad91c",
+          "result": "0x000000000000000000000000506297a1d0bbca1cf2ad0b2aee2896f922c71387"
+        },
+        {
+          "check": "GoldVault.siloFactory() is the silo factory",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0x42456f35",
+          "result": "0x000000000000000000000000455be3ee69c001088ab2a51bf5a70081574e8699"
+        },
+        {
+          "check": "GoldOracle.paxgToken() is PAXG",
+          "address": "oracle",
+          "to": "0x143BC7D142A64ed2dD3465078cc3F8d0868C1E2a",
+          "data": "0x5b05863a",
+          "result": "0x00000000000000000000000045804880de22913dafe09f4980848ece6ecbaf78"
+        },
+        {
+          "check": "GoldOracle.xautToken() is XAUT",
+          "address": "oracle",
+          "to": "0x143BC7D142A64ed2dD3465078cc3F8d0868C1E2a",
+          "data": "0x4996a62d",
+          "result": "0x00000000000000000000000068749665ff8d2d112fa859aa293f07a622782f38"
+        },
+        {
+          "check": "StabilityModule: the vault holds VAULT_ROLE",
+          "address": "stabilityModule",
+          "to": "0x13dBf5247e20dc161D4a624614F1be06C34eeA40",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d9590000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SurplusBuffer: the vault holds VAULT_ROLE",
+          "address": "surplusBuffer",
+          "to": "0x6AeCb57061f93c35cDc03Da94fCBaB8b9A9DD108",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d9590000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "StabilityPool: the vault holds VAULT_ROLE",
+          "address": "stabilityPool",
+          "to": "0x3321892E1c6bA9cccC5eCF68663BCfbb9233DC71",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d9590000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStabilityReserve.gsusd() is the GSUSD token",
+          "address": "reserve",
+          "to": "0x506297A1d0Bbca1cf2Ad0B2AeE2896f922C71387",
+          "data": "0xdfaba42d",
+          "result": "0x00000000000000000000000024c3597ef975bdb565fd146f61438ef14e15601d"
+        },
+        {
+          "check": "GoldStabilityReserve.oracle() is the oracle",
+          "address": "reserve",
+          "to": "0x506297A1d0Bbca1cf2Ad0B2AeE2896f922C71387",
+          "data": "0x7dc0d1d0",
+          "result": "0x000000000000000000000000143bc7d142a64ed2dd3465078cc3f8d0868c1e2a"
+        },
+        {
+          "check": "GoldStabilityReserve: the reserve holds no MINTER_ROLE",
+          "address": "stablecoin",
+          "to": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+          "data": "0x91d148549f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6000000000000000000000000506297a1d0bbca1cf2ad0b2aee2896f922c71387",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "check": "SiloFactory: the vault holds VAULT_ROLE",
+          "address": "siloFactory",
+          "to": "0x455BE3ee69C001088Ab2A51bf5A70081574e8699",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d9590000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SiloFactory.vaultRoleLocked() is true",
+          "address": "siloFactory",
+          "to": "0x455BE3ee69C001088Ab2A51bf5A70081574e8699",
+          "data": "0xf94e39b1",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SurplusBuffer.absorptionBurns() is true (the current contract generation)",
+          "address": "surplusBuffer",
+          "to": "0x6AeCb57061f93c35cDc03Da94fCBaB8b9A9DD108",
+          "data": "0xe28020fc",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldOracle.paxgUsdFeed() is the PAXG/USD feed",
+          "address": "oracle",
+          "to": "0x143BC7D142A64ed2dD3465078cc3F8d0868C1E2a",
+          "data": "0x6c34f4f4",
+          "result": "0x0000000000000000000000009944d86ceb9160af5c5feb251fd671923323f8c3"
+        },
+        {
+          "check": "GoldOracle.stalenessThreshold() is 90000",
+          "address": "oracle",
+          "to": "0x143BC7D142A64ed2dD3465078cc3F8d0868C1E2a",
+          "data": "0xa84f6ebb",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000015f90"
+        },
+        {
+          "check": "GoldVault.vaultRegistry() is the registry",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0xcdd7b38a",
+          "result": "0x00000000000000000000000098a9e7ed7e5b1dcabfa34ac5be7b98a9c388bb00"
+        },
+        {
+          "check": "VaultRegistry.vault() is the vault",
+          "address": "vaultRegistry",
+          "to": "0x98a9e7Ed7e5b1DcABfa34aC5BE7B98a9c388BB00",
+          "data": "0xfbfa77cf",
+          "result": "0x0000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146"
+        },
+        {
+          "check": "GoldGovernance.vault() is the vault",
+          "address": "governance",
+          "to": "0x3625df35654E817c475655d87d097A5026C5200C",
+          "data": "0xfbfa77cf",
+          "result": "0x0000000000000000000000009bdd28cef1dff26ce2401ad2a33eb521afa32146"
+        },
+        {
+          "check": "GoldGovernance.getTimelockAddress() is the timelock",
+          "address": "governance",
+          "to": "0x3625df35654E817c475655d87d097A5026C5200C",
+          "data": "0xa63e6ea9",
+          "result": "0x000000000000000000000000beaed7bacd53eb4c37bbbd0fbd7276a825d04d4c"
+        },
+        {
+          "check": "TimelockController: the governance wrapper holds PROPOSER_ROLE",
+          "address": "timelock",
+          "to": "0xBEaEd7bacD53EB4c37bbbD0fBD7276a825D04D4c",
+          "data": "0x91d14854b09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc10000000000000000000000003625df35654e817c475655d87d097a5026c5200c",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin: the timelock holds DEFAULT_ADMIN_ROLE",
+          "address": "stablecoin",
+          "to": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+          "data": "0x91d148540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000beaed7bacd53eb4c37bbbd0fbd7276a825d04d4c",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldVault: the timelock holds DEFAULT_ADMIN_ROLE",
+          "address": "vault",
+          "to": "0x9BDd28CEF1DFf26ce2401aD2A33eb521afa32146",
+          "data": "0x91d148540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000beaed7bacd53eb4c37bbbd0fbd7276a825d04d4c",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin: the deployer no longer holds DEFAULT_ADMIN_ROLE",
+          "address": "stablecoin",
+          "to": "0x24C3597eF975bdB565fd146f61438Ef14e15601D",
+          "data": "0x91d14854000000000000000000000000000000000000000000000000000000000000000000000000000000000000000078a4586ba99045eaebae03ba5624d7f55ddea584",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "11155111": {
+      "chainId": 11155111,
+      "name": "sepolia",
+      "status": "testnet",
+      "explorer": "https://sepolia.etherscan.io",
+      "deployBlock": 12213256,
+      "deployedAt": "2026-11-26T01:27:24.348Z",
+      "governanceTransferred": true,
+      "addresses": {
+        "oracle": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+        "stablecoin": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+        "stabilityModule": "0xBd09bEBec6d6BC2F298612C8Fd4d9943E5a9a591",
+        "vault": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+        "surplusBuffer": "0x483075bA5188dB1C50960ea0Aa182bbf34762fd0",
+        "stabilityPool": "0xca957D16426220D0898E50a99950FC28c26D6651",
+        "reserve": "0x4327f9b4Ec2d2F23EB71540ad88563122EdeEEB4",
+        "siloFactory": "0x21345122c59031E984673E1093Fd2B5aeAb4dEB7",
+        "vaultRegistry": "0xA33dDd04380e8D2cE12fc2487fACEfDF51c66E51",
+        "governance": "0xd7c400B353Ad14629a6045cEb8eE35FDAEA439b0",
+        "timelock": "0xF2ACe4ae2094dd3740b10201910c23322C54470B"
+      },
+      "collateral": [
+        {
+          "symbol": "PAXG",
+          "token": "0x5ccd1c3Cf37261EbA2f681b2848271C9e1De4c6e",
+          "decimals": 18,
+          "minRatioPpm": 1300000,
+          "liquidationRatioPpm": 1100000,
+          "liquidationPenaltyPpm": 50000,
+          "debtCeiling": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+          "stabilityFeeBps": 200
+        },
+        {
+          "symbol": "XAUT",
+          "token": "0xc309AC61Acb5F2468BB142D8FcE4e177b2EeFb01",
+          "decimals": 6,
+          "minRatioPpm": 0,
+          "liquidationRatioPpm": 0,
+          "liquidationPenaltyPpm": 0,
+          "debtCeiling": "0",
+          "stabilityFeeBps": 0,
+          "active": false,
+          "note": "registered in the oracle only: not a vault collateral type, reserve asset or stability pool token, so deposits revert; activation is a governance batch through the timelock"
+        }
+      ],
+      "parameters": {
+        "minDebt": "100000000000000000000",
+        "underwaterDiscountPpm": 20000,
+        "originationFeeBps": 5,
+        "oracleStalenessSeconds": 90000,
+        "reserveDailyCapPpm": 200000
+      },
+      "minting": {
+        "minter": "GoldVault",
+        "note": "GSUSD is minted only by the GoldVault listed here, which holds MINTER_ROLE. The minter set stays changeable by governance through the 48 hour timelock until lockMinters(vault) is called (lockMinters() on deployments before 2026-11-06); read GoldStablecoin.mintersLocked() to check whether it has been."
+      },
+      "verification": [
+        {
+          "check": "GoldStablecoin: the vault holds MINTER_ROLE",
+          "address": "stablecoin",
+          "to": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+          "data": "0x91d148549f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a600000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin.decimals() is 18",
+          "address": "stablecoin",
+          "to": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+          "data": "0x313ce567",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000012"
+        },
+        {
+          "check": "GoldVault.stablecoin() is the GSUSD token",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0xe9cbd822",
+          "result": "0x000000000000000000000000d6acbab93d5d45a613718c5ae70f546ba40ca1dd"
+        },
+        {
+          "check": "GoldVault.oracle() is the oracle",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0x7dc0d1d0",
+          "result": "0x000000000000000000000000717665c1bbb48522ce3c225ab081f21411e7d9bd"
+        },
+        {
+          "check": "GoldVault.stabilityModule() is the stability module",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0xea061ad4",
+          "result": "0x000000000000000000000000bd09bebec6d6bc2f298612c8fd4d9943e5a9a591"
+        },
+        {
+          "check": "GoldVault.stabilityPool() is the pool",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0x048c661d",
+          "result": "0x000000000000000000000000ca957d16426220d0898e50a99950fc28c26d6651"
+        },
+        {
+          "check": "GoldVault.surplusBuffer() is the surplus buffer",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0x2a608d5b",
+          "result": "0x000000000000000000000000483075ba5188db1c50960ea0aa182bbf34762fd0"
+        },
+        {
+          "check": "GoldVault.stabilityReserve() is the reserve",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0xd6cad91c",
+          "result": "0x0000000000000000000000004327f9b4ec2d2f23eb71540ad88563122edeeeb4"
+        },
+        {
+          "check": "GoldVault.siloFactory() is the silo factory",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0x42456f35",
+          "result": "0x00000000000000000000000021345122c59031e984673e1093fd2b5aeab4deb7"
+        },
+        {
+          "check": "GoldOracle.paxgToken() is PAXG",
+          "address": "oracle",
+          "to": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+          "data": "0x5b05863a",
+          "result": "0x0000000000000000000000005ccd1c3cf37261eba2f681b2848271c9e1de4c6e"
+        },
+        {
+          "check": "GoldOracle.xautToken() is XAUT",
+          "address": "oracle",
+          "to": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+          "data": "0x4996a62d",
+          "result": "0x000000000000000000000000c309ac61acb5f2468bb142d8fce4e177b2eefb01"
+        },
+        {
+          "check": "StabilityModule: the vault holds VAULT_ROLE",
+          "address": "stabilityModule",
+          "to": "0xBd09bEBec6d6BC2F298612C8Fd4d9943E5a9a591",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d95900000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SurplusBuffer: the vault holds VAULT_ROLE",
+          "address": "surplusBuffer",
+          "to": "0x483075bA5188dB1C50960ea0Aa182bbf34762fd0",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d95900000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "StabilityPool: the vault holds VAULT_ROLE",
+          "address": "stabilityPool",
+          "to": "0xca957D16426220D0898E50a99950FC28c26D6651",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d95900000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStabilityReserve.gsusd() is the GSUSD token",
+          "address": "reserve",
+          "to": "0x4327f9b4Ec2d2F23EB71540ad88563122EdeEEB4",
+          "data": "0xdfaba42d",
+          "result": "0x000000000000000000000000d6acbab93d5d45a613718c5ae70f546ba40ca1dd"
+        },
+        {
+          "check": "GoldStabilityReserve.oracle() is the oracle",
+          "address": "reserve",
+          "to": "0x4327f9b4Ec2d2F23EB71540ad88563122EdeEEB4",
+          "data": "0x7dc0d1d0",
+          "result": "0x000000000000000000000000717665c1bbb48522ce3c225ab081f21411e7d9bd"
+        },
+        {
+          "check": "GoldStabilityReserve: the reserve holds no MINTER_ROLE",
+          "address": "stablecoin",
+          "to": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+          "data": "0x91d148549f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a60000000000000000000000004327f9b4ec2d2f23eb71540ad88563122edeeeb4",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "check": "SiloFactory: the vault holds VAULT_ROLE",
+          "address": "siloFactory",
+          "to": "0x21345122c59031E984673E1093Fd2B5aeAb4dEB7",
+          "data": "0x91d1485431e0210044b4f6757ce6aa31f9c6e8d4896d24a755014887391a926c5224d95900000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SiloFactory.vaultRoleLocked() is true",
+          "address": "siloFactory",
+          "to": "0x21345122c59031E984673E1093Fd2B5aeAb4dEB7",
+          "data": "0xf94e39b1",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "SurplusBuffer.absorptionBurns() is true (the current contract generation)",
+          "address": "surplusBuffer",
+          "to": "0x483075bA5188dB1C50960ea0Aa182bbf34762fd0",
+          "data": "0xe28020fc",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldOracle.paxgUsdFeed() is the PAXG/USD feed",
+          "address": "oracle",
+          "to": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+          "data": "0x6c34f4f4",
+          "result": "0x000000000000000000000000f6052f56cbd51493e9247ab280bf51d26d622c4c"
+        },
+        {
+          "check": "GoldOracle.stalenessThreshold() is 90000",
+          "address": "oracle",
+          "to": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+          "data": "0xa84f6ebb",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000015f90"
+        },
+        {
+          "check": "GoldVault.vaultRegistry() is the registry",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0xcdd7b38a",
+          "result": "0x000000000000000000000000a33ddd04380e8d2ce12fc2487facefdf51c66e51"
+        },
+        {
+          "check": "VaultRegistry.vault() is the vault",
+          "address": "vaultRegistry",
+          "to": "0xA33dDd04380e8D2cE12fc2487fACEfDF51c66E51",
+          "data": "0xfbfa77cf",
+          "result": "0x00000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f"
+        },
+        {
+          "check": "GoldGovernance.vault() is the vault",
+          "address": "governance",
+          "to": "0xd7c400B353Ad14629a6045cEb8eE35FDAEA439b0",
+          "data": "0xfbfa77cf",
+          "result": "0x00000000000000000000000099db5e0ef12a28561de82be965daffaf46de7d7f"
+        },
+        {
+          "check": "GoldGovernance.getTimelockAddress() is the timelock",
+          "address": "governance",
+          "to": "0xd7c400B353Ad14629a6045cEb8eE35FDAEA439b0",
+          "data": "0xa63e6ea9",
+          "result": "0x000000000000000000000000f2ace4ae2094dd3740b10201910c23322c54470b"
+        },
+        {
+          "check": "TimelockController: the governance wrapper holds PROPOSER_ROLE",
+          "address": "timelock",
+          "to": "0xF2ACe4ae2094dd3740b10201910c23322C54470B",
+          "data": "0x91d14854b09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1000000000000000000000000d7c400b353ad14629a6045ceb8ee35fdaea439b0",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin: the timelock holds DEFAULT_ADMIN_ROLE",
+          "address": "stablecoin",
+          "to": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+          "data": "0x91d148540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f2ace4ae2094dd3740b10201910c23322c54470b",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldVault: the timelock holds DEFAULT_ADMIN_ROLE",
+          "address": "vault",
+          "to": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+          "data": "0x91d148540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f2ace4ae2094dd3740b10201910c23322c54470b",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "check": "GoldStablecoin: the deployer no longer holds DEFAULT_ADMIN_ROLE",
+          "address": "stablecoin",
+          "to": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+          "data": "0x91d148540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000445bf562c475af3721f379ff9d106fd1aef10e38",
+          "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  }
+}

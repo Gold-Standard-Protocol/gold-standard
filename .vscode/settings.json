@@ -1,0 +1,20 @@
+{
+  "eslint.validate": [
+    "json"
+  ],
+  "cSpell.words": [
+    "bullmq",
+    "clsx",
+    "heroicons",
+    "keyv",
+    "PAXG",
+    "Paxos",
+    "rainbowkit",
+    "SEPOLIA",
+    "tailwindcss",
+    "tanstack",
+    "trpc",
+    "viem",
+    "wagmi"
+  ]
+}

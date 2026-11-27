@@ -1,0 +1,142 @@
+{
+  "chainId": 11155111,
+  "network": "sepolia",
+  "deployer": "0x445Bf562C475af3721F379FF9D106fD1AEf10E38",
+  "deployedAt": "2026-11-26T01:27:24.348Z",
+  "deployBlock": 12213256,
+  "creationBlocks": {
+    "oracle": 12213252,
+    "stablecoin": 12213253,
+    "stabilityModule": 12213254,
+    "vault": 12213256,
+    "surplusBuffer": 12213257,
+    "stabilityPool": 12213258,
+    "reserve": 12213259,
+    "siloFactory": 12213260,
+    "vaultRegistry": 12213280,
+    "governance": 12213261,
+    "timelock": 12213261
+  },
+  "addresses": {
+    "oracle": "0x717665C1bBb48522CE3c225ab081F21411e7D9BD",
+    "stablecoin": "0xd6Acbab93d5D45A613718c5ae70f546ba40Ca1dd",
+    "stabilityModule": "0xBd09bEBec6d6BC2F298612C8Fd4d9943E5a9a591",
+    "vault": "0x99db5e0eF12A28561de82be965dafFaf46De7d7f",
+    "surplusBuffer": "0x483075bA5188dB1C50960ea0Aa182bbf34762fd0",
+    "stabilityPool": "0xca957D16426220D0898E50a99950FC28c26D6651",
+    "reserve": "0x4327f9b4Ec2d2F23EB71540ad88563122EdeEEB4",
+    "siloFactory": "0x21345122c59031E984673E1093Fd2B5aeAb4dEB7",
+    "vaultRegistry": "0xA33dDd04380e8D2cE12fc2487fACEfDF51c66E51",
+    "governance": "0xd7c400B353Ad14629a6045cEb8eE35FDAEA439b0",
+    "timelock": "0xF2ACe4ae2094dd3740b10201910c23322C54470B"
+  },
+  "config": {
+    "launchCaps": "open",
+    "paxgToken": "0x5ccd1c3Cf37261EbA2f681b2848271C9e1De4c6e",
+    "xautToken": "0xc309AC61Acb5F2468BB142D8FcE4e177b2EeFb01",
+    "paxgFeed": "0xF6052f56cBD51493e9247ab280BF51D26d622c4c",
+    "xautFeed": "0x2e9A3f1213D2981376a10eB489955e76Cf19f96A",
+    "xautFeedDeployed": true,
+    "anchorFeed": "0x5f260a1BbcD3DdDf07eE0FB3E5F4809A3A6D2dCc",
+    "xautActive": false,
+    "paxgBackstopMax": "5000000000000000000000000",
+    "backstopRehearsal": false,
+    "paxgGoldBandPpm": "20000",
+    "paxgLiquidationClampPpm": "20000",
+    "minGsusdReserve": "0",
+    "reservePenaltyShareBps": "4000",
+    "originationFeeBps": "5",
+    "minDebt": "100000000000000000000",
+    "underwaterDiscountPpm": "20000",
+    "reserveDailyCapPpm": "200000",
+    "reserveAggregateDailyCapUsd": "0",
+    "reserveMinReservePaxg": "0",
+    "reserveMinReserveXaut": "0",
+    "reserveSpreadCurve": [
+      {
+        "coverageAtLeastPpm": "150000",
+        "spreadPpm": "5000"
+      },
+      {
+        "coverageAtLeastPpm": "100000",
+        "spreadPpm": "5000"
+      },
+      {
+        "coverageAtLeastPpm": "50000",
+        "spreadPpm": "7500"
+      },
+      {
+        "coverageAtLeastPpm": "20000",
+        "spreadPpm": "12500"
+      }
+    ],
+    "reserveRestrictedSpreadPpm": "20000",
+    "minCollateralReserve": "0",
+    "badDebtPauseThreshold": "25000000000000000000000",
+    "perBlockMintCap": "0",
+    "lockSiloVaultRole": true,
+    "proposers": [
+      "0x767B21Ba106aa1A01aCBEAb42eFa57776584f71c"
+    ],
+    "executors": [
+      "0x7ACfb50588D92c5Bb8311c3758A67dfbD528e03A"
+    ],
+    "guardian": "0xAfa4Ff03885A32c0f3AB2FBDdD2b8e0868e57AE3",
+    "stalenessThreshold": 90000,
+    "siloCap": "100000000000000000000",
+    "paxg": {
+      "minRatio": 1300000,
+      "liqRatio": 1100000,
+      "liqPenalty": 50000,
+      "debtCeiling": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "stabilityFeeBps": 200
+    },
+    "xaut": {
+      "minRatio": 1300000,
+      "liqRatio": 1100000,
+      "liqPenalty": 50000,
+      "debtCeiling": "0",
+      "stabilityFeeBps": 200
+    },
+    "parametersHash": "0xfdf44c852a5ff789856f2f8b0f0129d627f64fbd889657392ce82f1f951ef9d5"
+  },
+  "build": {
+    "solc": "0.8.38",
+    "settings": {
+      "evmVersion": "cancun",
+      "viaIR": true,
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ],
+          "": [
+            "ast"
+          ]
+        }
+      }
+    },
+    "runtimeCodeHashes": {
+      "oracle": "0xeb5f55129dbee15e0f4e5672d91741fad9cde9d9dcca128d11ac09a04a2a0475",
+      "stablecoin": "0xc5ba342513c9032b5073f6cc9c8f6ca6f40fb7ad08a594b870b262519cd39da9",
+      "stabilityModule": "0x858f2e59b935c9025bb071bcdb4b55beca525383b3c3a0e9422e0bd8a4efd123",
+      "vault": "0x9799b71208bc6736b0794f449d5684825921bb7035712abc6b2a0102662d1813",
+      "surplusBuffer": "0x9810c905d7197b9d0cb8717869b9b8e5677f95a34385c5b15ce6fd6f00ef3a0e",
+      "stabilityPool": "0x2a9d886780eee1e20308eebdbd4d06a4e97d997ae4e8d332f8f1a3f4a2054015",
+      "reserve": "0x2a4252583c6596b9ba870abbf09c421331cff172e475420649bfed2bba71e011",
+      "siloFactory": "0x74ed2e0d031cfffdcf331d90fa255771d27d1325b2c75de2ba80b6d2d3a34854",
+      "vaultRegistry": "0xa00e97e7e9b079362b7dff13585239751e0b4b92063f73abb6b4553043534c37",
+      "governance": "0xaca8995071bc967d7ee9c401b2d6bd7bc012994c26e5f0abeb169ec5a46288b9",
+      "timelock": "0x3acf221496d08ad4e76f492ef378bba1800df5ccfa46ec9003918bceebea3cbf"
+    }
+  },
+  "governanceTransferred": true
+}
