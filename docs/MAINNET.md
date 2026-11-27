@@ -765,8 +765,9 @@ Record the commit and the CID together in the release notes. The builds publishe
 | --- | --- | --- | --- |
 | 2026-11-27 | `05f2e37064d27762033fa71ee377b67fdb33a83b` | `05f2e37064` | `bafybeihzxintmewtjoln5hlswyyqheiqppjaqjpp4f2mhrdwc43wk7xfhi` |
 | 2026-11-27 | `726520f9f27f87e34f36f0efe11c5b8b38f01462` | `726520f9f2` | `bafybeigvdu23a3kupvhd2pnpuhbgp5bq46avrxfphlq6i7xhhr7exfq35e` |
+| 2026-11-27 | `5a6f557a3296e6e9648024b3a4a9b7544b664e40` | `5a6f557a32` | `bafybeiaham7sill2op7lau6ovg23jkmervesr7igmrhowxswcj3tesph2i` |
 
-The ENS record names the second. The build expects to sit at
+The ENS record names the latest once the owner wallet has set it; read the record to see which build the name serves. The build expects to sit at
 an origin root, which an ENS gateway or the mirror provides. It does not work under a path
 such as `/ipfs/<cid>/` on a general gateway, where its routes and asset paths do not
 resolve.

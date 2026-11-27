@@ -344,7 +344,7 @@ export const PROTOCOL_PARAMETERS: ProtocolParameter[] = [
 ];
 
 export const FOOTER = {
-  blurb: 'Each GSUSD is minted against at least $1.30 of tokenised gold.',
+  blurb: 'The dollar, back on a gold standard.',
   links: [
     { label: 'Docs', to: '/docs', internal: true },
     { label: 'Reserves', to: '/transparency', internal: true },
