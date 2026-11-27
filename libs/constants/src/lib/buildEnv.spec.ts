@@ -171,6 +171,18 @@ describe('checkBuildEnv on a mainnet build', () => {
 		]);
 	});
 
+	it('checks the token GSUSD trades against only when it is set, and never lets it be GSUSD', () => {
+		const usdc = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+		expect(mainnet({ VITE_GSUSD_MARKET_TOKEN: undefined }).problems).toEqual([]);
+		expect(mainnet({ VITE_GSUSD_MARKET_TOKEN: usdc }).problems).toEqual([]);
+		expect(mainnet({ VITE_GSUSD_MARKET_TOKEN: 'usdc' }).problems).toEqual([
+			expect.stringContaining('VITE_GSUSD_MARKET_TOKEN "usdc" is not a valid address'),
+		]);
+		expect(mainnet({ VITE_GSUSD_MARKET_TOKEN: addressFor(2) }).problems).toEqual([
+			expect.stringContaining('VITE_GSUSD_MARKET_TOKEN holds the same address as VITE_GUSD_ADDRESS'),
+		]);
+	});
+
 	it.each([
 		['VITE_PAXG_ADDRESS', 'PAXG', MAINNET_PAXG_ADDRESS],
 		['VITE_XAUT_ADDRESS', 'XAUT', MAINNET_XAUT_ADDRESS],

@@ -41,6 +41,17 @@
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=300
 
+# The token list and the official marks, which wallets and listing sites read from other
+# origins. Both are written by the build (vite.config.mts, publishTokenFiles): the marks in
+# every build, the list in a mainnet build.
+/tokenlist.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
+/brand/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=86400
+
 # The entry document is the one file whose name never changes, so it must be revalidated or a
 # visitor keeps a page pointing at hashed assets a newer deploy has removed.
 /

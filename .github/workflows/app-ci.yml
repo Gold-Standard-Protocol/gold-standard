@@ -45,8 +45,8 @@ jobs:
       - run: npm ci
       - name: Dapp and shared unit tests
         run: npx vitest run
-      - name: API, keeper, backend and Nx plugin unit tests
-        run: npx jest --runInBand --projects apps/api apps/keeper libs/trpc tools/plugin
+      - name: API, keeper, watcher, backend and Nx plugin unit tests
+        run: npx jest --runInBand --projects apps/api apps/keeper apps/watcher libs/trpc tools/plugin
       # vitest and the vite build transpile without type-checking,
       # so the dapp and the vite libraries were never type-checked in CI, and nothing ran
       # ESLint. Contracts lint (solhint) runs in contracts-lint.yml with its own install.
@@ -62,4 +62,4 @@ jobs:
           VITE_TARGET_CHAIN_ID: '11155111'
         run: |
           export VITE_PAXG_ADDRESS="$(node -p "require('./contracts/deployments/sepolia.json').config.paxgToken")"
-          npx nx run-many --target=build --projects=dapp,api,keeper
+          npx nx run-many --target=build --projects=dapp,api,keeper,watcher

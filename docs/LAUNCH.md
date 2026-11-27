@@ -69,7 +69,8 @@ Each item is a hard go/no-go. If any are missing, stop and finish them first.
       as structural; check both deploy environments explicitly before going
       live.
 - [ ] Monitoring and alerting wired:
-      - Tenderly alert rules for `Paused`, `TokenFrozen`, `BadDebt`,
+      - Tenderly alert rules or the watcher service (`apps/watcher`, `MAINNET.md`
+        section 4.8) for `Paused`, `TokenFrozen`, `BadDebt`,
         `AssetPaused`, large mints/stability swaps, reserve coverage vs
         circulating supply, vault CR below 115% for >5 min
       - A rule for every `RoleGranted` whose role is `VAULT_ROLE` on the stability

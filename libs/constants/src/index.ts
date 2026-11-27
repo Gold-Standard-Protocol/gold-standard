@@ -11,6 +11,9 @@ export * from './lib/targetChain';
 export * from './lib/goldVault';
 // Uniswap v3 quoter/router addresses and the pool fee tier for the market swap leg
 export * from './lib/dex';
+// The outside market's buy link and the token list a build publishes
+export * from './lib/market';
+export * from './lib/tokenList';
 export * from './lib/tokens';
 // The canonical mainnet gold tokens, the RPC list parser and the build environment checks.
 export * from './lib/mainnetTokens';

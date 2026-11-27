@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "outDir": "../../dist/out-tsc",
+    // es2020 to match apps/api and apps/keeper. The watcher imports no workspace library:
+    // its event definitions are local parseAbi strings, checked against the published ABIs
+    // by rules.spec.ts.
+    "module": "es2020",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

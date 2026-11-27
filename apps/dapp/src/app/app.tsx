@@ -171,16 +171,17 @@ function Shell() {
       </main>
 
       <footer className="border-t border-border">
-        <div className="container flex flex-col items-center justify-between gap-3 py-6 text-xs text-muted-foreground sm:flex-row">
-          <p className="flex items-center gap-2">
-            <span className="font-serif text-sm text-foreground">
+        <div className="container flex flex-col items-center justify-between gap-3 py-6 text-xs text-muted-foreground xl:flex-row">
+          {/* Below the wide layout the name sits on its own line with the sentence beneath it. */}
+          <p className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-2 xl:text-left">
+            <span className="whitespace-nowrap font-serif text-sm text-foreground">
               Gold Standard
             </span>
-            <span aria-hidden>·</span>
-            <span>{FOOTER.blurb}</span>
+            <span aria-hidden className="hidden xl:inline">·</span>
+            <span className="text-balance">{FOOTER.blurb}</span>
           </p>
           {/* Wraps on narrow screens; each link is a 44px tap target. */}
-          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-1 gap-y-0">
+          <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 xl:justify-start">
             {FOOTER.links.map((link) =>
               link.internal ? (
                 <NavLink

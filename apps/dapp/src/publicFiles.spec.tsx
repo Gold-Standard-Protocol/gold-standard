@@ -37,6 +37,26 @@ describe('single-page fallback for the IPFS and ENS route', () => {
 	});
 });
 
+describe('token list and brand marks', () => {
+	// The build writes both beside the bundle (vite.config.mts, publishTokenFiles), so neither
+	// has a copy in the public folder to drift from the brand folder or from the build address.
+	it('keeps no hand-made copy of either in the public folder', () => {
+		expect(existsSync(resolve(PUBLIC_DIR, 'tokenlist.json'))).toBe(false);
+		expect(existsSync(resolve(PUBLIC_DIR, 'brand'))).toBe(false);
+	});
+
+	it('lets other origins read them', () => {
+		const headers = publicFile('_headers');
+		expect(headers).toContain('/tokenlist.json\n  Access-Control-Allow-Origin: *\n');
+		expect(headers).toContain('/brand/*\n  Access-Control-Allow-Origin: *\n');
+	});
+
+	it('is wired into the build', () => {
+		const config = readFileSync(resolve(DAPP_ROOT, 'vite.config.mts'), 'utf8');
+		expect(config).toMatch(/plugins: \[[^\]]*publishTokenFiles\(\)/s);
+	});
+});
+
 describe('sitemap and canonical link', () => {
 	const listed = [...publicFile('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 	const live = [...Object.keys(ROUTE_TITLES), ...DOC_ITEMS.map((item) => `/docs/${item.slug}`)].map(canonicalUrl);

@@ -9,6 +9,7 @@ Everything the dapp does can be done with contract calls alone. Start with the m
 - [Agent manifest](https://goldstandardfinance.eth.limo/agents.json): schema goldstandard-agents/1; addresses, tokens, ratios in parts per million, conventions, reads, actions and maintenance calls for each deployment, with a verification list of raw eth_calls that covers every listed address
 - ABIs as JSON: [GoldVault](https://goldstandardfinance.eth.limo/abi/GoldVault.json), [VaultRegistry](https://goldstandardfinance.eth.limo/abi/VaultRegistry.json), [GoldStablecoin](https://goldstandardfinance.eth.limo/abi/GoldStablecoin.json), [GoldOracle](https://goldstandardfinance.eth.limo/abi/GoldOracle.json), [GoldStabilityReserve](https://goldstandardfinance.eth.limo/abi/GoldStabilityReserve.json), [StabilityPool](https://goldstandardfinance.eth.limo/abi/StabilityPool.json), [StabilityModule](https://goldstandardfinance.eth.limo/abi/StabilityModule.json), [SurplusBuffer](https://goldstandardfinance.eth.limo/abi/SurplusBuffer.json), [SiloFactory](https://goldstandardfinance.eth.limo/abi/SiloFactory.json), [GoldGovernance](https://goldstandardfinance.eth.limo/abi/GoldGovernance.json)
 - [Contracts and addresses](https://goldstandardfinance.eth.limo/docs/contracts): the same addresses with Etherscan links
+- [Token list](https://goldstandardfinance.eth.limo/tokenlist.json): GSUSD on mainnet in the Token Lists format, with its logo; the marks are under https://goldstandardfinance.eth.limo/brand/
 
 ## Guides
 

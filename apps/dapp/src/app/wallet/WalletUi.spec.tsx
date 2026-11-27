@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mainnet, sepolia } from 'viem/chains';
 import { ConnectButton } from '../components/ConnectButton';
@@ -20,6 +20,8 @@ vi.mock('wagmi', () => ({
   useSwitchChain: () => ({ mutateAsync: state.switchChain, isPending: false }),
 }));
 vi.mock('@goldstandard/constants', () => ({ TARGET_CHAIN_ID: 1 }));
+// The control has its own spec (AddToWallet.spec.tsx); here only its place in the dialog is checked.
+vi.mock('./AddToWallet', () => ({ AddToWallet: () => <button type="button">Add GSUSD to wallet</button> }));
 
 const ADDRESS = '0x0000000000000000000000000000000000000001';
 const URI = 'wc:' + '1'.repeat(64) + '@2?relay-protocol=irn&symKey=' + '2'.repeat(64);
@@ -349,6 +351,14 @@ describe('wallet controls', () => {
     expect(account.textContent).toContain('0x0000…0001');
     expect(account.textContent).not.toContain('Ethereum');
     expect(account.querySelector('.bg-success')).toBeTruthy();
+  });
+
+  it('offers adding GSUSD to the wallet in the account dialog, between the address and the connection controls', () => {
+    state.connection = { address: ADDRESS, isConnected: true, chain: mainnet, chainId: 1, connector: state.connectors[1] };
+    mount();
+    fireEvent.click(screen.getAllByRole('button', { name: `Wallet ${ADDRESS} on Ethereum` })[0]);
+    const names = within(screen.getByRole('dialog')).getAllByRole('button').map((button) => button.textContent);
+    expect(names.slice(0, 5)).toEqual(['Copy address', 'Add GSUSD to wallet', 'Change network', 'Change wallet', 'Disconnect']);
   });
 
   it('prefers discovered browser wallets to the generic injected fallback', () => {

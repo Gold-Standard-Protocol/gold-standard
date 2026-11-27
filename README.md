@@ -168,6 +168,7 @@ services and the first week's steps, each one command). High-level gates:
 
 ### Operator tasks
 - [x] Liquidation keeper service (`apps/keeper`: liquidation watch, oracle health watch and alerts, a heartbeat line per tick and an optional dead-man ping; it runs no fee job, because the stability fee accrues inside the contracts; dry run until `KEEPER_DRY_RUN=false`).
+- [x] Watcher service (`apps/watcher`: reports pauses, freezes, bad debt, governance proposals, role grants, mints and liquidations, a watched vault's collateral ratio and the reserve coverage to a Telegram chat; it holds no key and sends no transaction).
 - [ ] Redundant keeper instance on a second provider. MEV-protected mempool.
 - [ ] Chainlink feed health monitor (deviation, staleness; the keeper's `oracle.feed-late` covers a late heartbeat) and issuer monitoring on the silos (`paused()` and the freeze events of PAXG's current implementation, which its June 2026 upgrade changed).
 - [ ] Solvency dashboard (Dune / Tenderly) with real-time ratio, per-vault risk distribution and reserve coverage.

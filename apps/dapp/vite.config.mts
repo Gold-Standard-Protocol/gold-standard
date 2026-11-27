@@ -13,6 +13,8 @@ import {
 } from '../../libs/constants/src/lib/targetChainValue';
 import { buildEnvRefusal, checkBuildEnv, ledgerCodeProblems, type BuildEnv } from '../../libs/constants/src/lib/buildEnv';
 import { sitemapForBuild } from '../../libs/constants/src/lib/sitemap';
+import { tokenListForBuild, tokenListText } from '../../libs/constants/src/lib/tokenList';
+import { copyBrandFiles } from './src/build/brandFiles';
 
 /**
  * The end-to-end wallet (src/app/e2eWallet.ts) may never ship. A build in e2e mode, or a
@@ -145,6 +147,41 @@ function finishSitemap(): Plugin {
   };
 }
 
+/**
+ * What a build publishes about the token beside the bundle: the official marks under /brand/
+ * (copied from the repository's brand folder, the one source) and, in a mainnet build,
+ * /tokenlist.json with the GSUSD address the build was configured with
+ * (libs/constants/src/lib/tokenList.ts). Other builds publish no list: their token is a test
+ * deployment nobody should import.
+ */
+function publishTokenFiles(): Plugin {
+  let outDir = '';
+  let env: BuildEnv = {};
+  return {
+    name: 'goldstandard:publish-token-files',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+      env = viteVariables(config.env);
+    },
+    writeBundle() {
+      try {
+        copyBrandFiles(outDir);
+      } catch (error) {
+        this.error(error instanceof Error ? error.message : String(error));
+      }
+      const chainId = Number(env['VITE_TARGET_CHAIN_ID']);
+      const list = tokenListForBuild({
+        chainId,
+        gsusd: env['VITE_GUSD_ADDRESS']?.trim(),
+        day: env['VITE_BUILD_DATE'] ?? buildDay(),
+      });
+      if (list !== undefined) writeFileSync(join(outDir, 'tokenlist.json'), tokenListText(list));
+      else if (chainId === 1) this.warn('No tokenlist.json was written: the build has no commit day. Set VITE_BUILD_DATE=YYYY-MM-DD.');
+    },
+  };
+}
+
 /** The VITE_* values Vite loaded from the process environment and the .env files, as text. */
 function viteVariables(loaded: Readonly<Record<string, unknown>>): BuildEnv {
   return Object.fromEntries(
@@ -183,6 +220,7 @@ export default defineConfig({
     refuseUnsupportedTargetChainInBuilds(),
     refuseLedgerCodeInOffBuilds(),
     finishSitemap(),
+    publishTokenFiles(),
     react(),
     nxViteTsPaths(),
     nxCopyAssetsPlugin(['*.md']),

@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@goldstandard/ui';
 import { TARGET_CHAIN_ID } from '@goldstandard/constants';
 import { isPairingUri } from './universalProvider';
+import { AddToWallet } from './AddToWallet';
 
 type Mode = 'connect' | 'account' | 'chain';
 
@@ -288,6 +289,7 @@ export function WalletUiProvider({ children }: { children: ReactNode }) {
                 if (connection.address) void navigator.clipboard.writeText(connection.address)
                   .then(() => setCopied(true)).catch(() => setError('Could not copy the address.'));
               }}>{copied ? 'Copied' : 'Copy address'}</Button>
+              <AddToWallet />
               <Button variant="outline" onClick={() => { setError(undefined); setMode('chain'); }}>Change network</Button>
               <Button variant="outline" disabled={pending || disconnect.isPending} onClick={() => {
                 // End the current connection first: a new wallet must never inherit it.

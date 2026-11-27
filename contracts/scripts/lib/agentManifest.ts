@@ -548,6 +548,7 @@ export function buildLlmsTxt(manifest: AgentManifest): string {
     `- [Agent manifest](${site}/agents.json): schema ${manifest.schema}; addresses, tokens, ratios in parts per million, conventions, reads, actions and maintenance calls for each deployment, with a verification list of raw eth_calls that covers every listed address`,
     `- ABIs as JSON: ${abis.join(", ")}`,
     `- [Contracts and addresses](${site}/docs/contracts): the same addresses with Etherscan links`,
+    `- [Token list](${site}/tokenlist.json): GSUSD on mainnet in the Token Lists format, with its logo; the marks are under ${site}/brand/`,
     "",
     "## Guides",
     "",

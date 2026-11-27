@@ -33,7 +33,7 @@ export const REQUIRED_MAINNET_ADDRESS_VARIABLES = [
 ] as const;
 
 /** Addresses the bundle works without, but which must be real addresses when they are set. */
-const OPTIONAL_ADDRESS_VARIABLES = ['VITE_UNISWAP_ROUTER', 'VITE_UNISWAP_QUOTER'] as const;
+const OPTIONAL_ADDRESS_VARIABLES = ['VITE_UNISWAP_ROUTER', 'VITE_UNISWAP_QUOTER', 'VITE_GSUSD_MARKET_TOKEN'] as const;
 
 /** The token overrides a mainnet build may carry only when they name the canonical token. */
 const CANONICAL_MAINNET_TOKENS = [
@@ -169,8 +169,8 @@ const setContractAddresses = (env: BuildEnv): readonly NamedAddress[] =>
 		.map(({ name, value }) => ({ name, address: value.toLowerCase() }));
 
 /**
- * Each protocol contract, the Uniswap router and the Uniswap quoter is a different contract,
- * and none of them is a gold token. One address pasted into two variables is refused, naming
+ * Each protocol contract, the Uniswap router, the Uniswap quoter and the token GSUSD trades
+ * against on the outside market is a different contract, and none of them is a gold token. One address pasted into two variables is refused, naming
  * the variable and the first holder of the same address.
  */
 const duplicateAddressProblems = (env: BuildEnv): readonly string[] => {

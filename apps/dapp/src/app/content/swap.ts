@@ -72,3 +72,16 @@ const RESERVE_ONLY: SwapPageCopy = {
 
 /** The page's words for a build with a market venue, or with the reserve alone. */
 export const swapPageCopy = (hasMarket: boolean): SwapPageCopy => (hasMarket ? WITH_MARKET : RESERVE_ONLY);
+
+/**
+ * The words beside the link to the outside market, shown only in a build that names one
+ * (VITE_GSUSD_MARKET_TOKEN). They say where the link goes and that the price there is the
+ * market's own; they promise no price.
+ */
+export const OUTSIDE_MARKET_COPY = {
+	title: 'Buying GSUSD',
+	detail:
+		'GSUSD also trades on Uniswap v3, outside this site. The price there is set by that market and its liquidity, not by the protocol. Check the token address on the Uniswap page against the one this site lists before you swap.',
+	link: 'Buy GSUSD on Uniswap',
+	newTab: '(opens in a new tab)',
+} as const;

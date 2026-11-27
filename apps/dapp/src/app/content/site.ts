@@ -344,7 +344,7 @@ export const PROTOCOL_PARAMETERS: ProtocolParameter[] = [
 ];
 
 export const FOOTER = {
-  blurb: 'GSUSD is minted against gold worth more than the GSUSD issued.',
+  blurb: 'Each GSUSD is minted against at least $1.30 of tokenised gold.',
   links: [
     { label: 'Docs', to: '/docs', internal: true },
     { label: 'Reserves', to: '/transparency', internal: true },

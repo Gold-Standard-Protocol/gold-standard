@@ -3,6 +3,7 @@ import { Card, CardContent } from '@goldstandard/ui';
 import { getDexConfig, getStabilityReserveContractConfig, type GoldVaultChainId } from '@goldstandard/constants';
 import { Reveal } from './components/Reveal';
 import { SectionHeader } from './components/marketing/Section';
+import { OutsideMarketLink } from './components/swap/OutsideMarketLink';
 import { SwapPanel } from './components/swap/SwapPanel';
 import { swapPageCopy } from './content/swap';
 
@@ -73,6 +74,11 @@ export default function SwapPage() {
           </Card>
         </Reveal>
       )}
+
+      {/* Renders nothing unless the build names an outside market (content/swap.ts). */}
+      <div className="mt-6">
+        <OutsideMarketLink />
+      </div>
     </div>
   );
 }

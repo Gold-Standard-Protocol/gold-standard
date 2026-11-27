@@ -29,10 +29,10 @@ checks the on-chain ones; nothing here can be scripted.
 | A project email address and a GitHub organisation that own every service account below | One place to recover every service account from | Section 4 |
 | An ENS name: goldstandardfinance.eth (project decision, 2026-11-16; it replaces the name used in earlier drafts). Registered on 2026-11-16 and paid to 2032-11-16, in the ENS registry at `0xf60aBA43E1f7f3dab1186ff03B561401C9dF85e2`; the older registry and tools that read only it report the name as unregistered, so confirm that the eth.limo gateway resolves it with a test content hash before section 4.4 | The canonical address of the dapp; its content hash is the build users can verify | Section 4.4 |
 | An IPFS pinning account (Pinata or Filebase), or a Fleek account that deploys from GitHub | Keeps the published build available | Section 4.4 |
-| The domain at a registrar with DNSSEC and a registry lock, and a Cloudflare Pages account (email only) for the mirror | The familiar URL, as a mirror of the same build | Section 4.5 |
+| The domain at a registrar with DNSSEC and a registry lock, and a Cloudflare account (email only) in front of the mirror | The familiar URL, as a mirror of the same build | Section 4.5 |
 | Two VPS accounts at different providers: one for the API, one for the keeper, a third later for the redundant keeper | The services; the keeper key exists on exactly one machine | Sections 4.6 and 4.7 |
-| A security mailbox at the domain | `/.well-known/security.txt` names it | Section 4.8 |
-| Tenderly alert rules and an on-call rota | Paused, TokenFrozen, BadDebt, AssetPaused, large mints, a vault below 115% for more than 5 minutes, every `CallScheduled` on the timelock, with its own rule for one whose call is `grantRole` on the stability pool, the stability module, the surplus buffer or the stability reserve (section 5, item 7), and every `RoleGranted` for `VAULT_ROLE` on those four contracts or for `MINTER_ROLE` on the stablecoin | `LAUNCH.md`, pre-launch checklist |
+| A security mailbox at the domain | `/.well-known/security.txt` names it | Section 4.9 |
+| Tenderly alert rules, or the watcher service of section 4.8, and an on-call rota | Paused, TokenFrozen, BadDebt, AssetPaused, large mints, a vault below 115% for more than 5 minutes, every `CallScheduled` on the timelock, with its own rule for one whose call is `grantRole` on the stability pool, the stability module, the surplus buffer or the stability reserve (section 5, item 7), and every `RoleGranted` for `VAULT_ROLE` on those four contracts or for `MINTER_ROLE` on the stablecoin | `LAUNCH.md`, pre-launch checklist |
 | A pager for the keeper: a log shipper from the keeper host, or a hosted dead-man check | The keeper's only output is JSON lines in its journal; nothing pages unless you wire it | Section 4.7, "Alerting" |
 | The release commit, whose full hash is in step 3.1 | The ceremony and the services build from that commit alone | Step 3.1 |
 | Every workflow green on the release commit, or a written record of the same checks run locally on that commit | `DEPLOYMENT_RUNBOOK.md` asks for every workflow green on `main`, and nothing gates a change while the workflows cannot run | `DEPLOYMENT_RUNBOOK.md`, pre-ceremony |
@@ -581,7 +581,7 @@ git push -u origin HEAD
 
 ## 4. Services, the same day
 
-Three hosts with one job each: the dapp on IPFS behind your ENS name with a DNS mirror,
+Three hosts with one job each (the watcher of section 4.8 shares the API server): the dapp on IPFS behind your ENS name with a DNS mirror,
 the API on its own server, the keeper on another. The API and the keeper never share a
 machine, and the keeper key exists on exactly one. Do everything in this section from
 the project accounts of section 1.
@@ -699,10 +699,27 @@ npx nx build dapp
 The output is `dist/apps/dapp`: the page, the hashed bundles, the self-hosted fonts, the
 `_headers` file with the content security policy, the `_redirects` file with the single
 rule `/* /index.html 200` (deep links and refreshes resolve on gateways that honour it) and
-`.well-known/security.txt`. Do not add a `404.html`: Cloudflare Pages turns its own
+`.well-known/security.txt`. Do not add a `404.html`: a static host such as Cloudflare Pages turns its own
 single-page fallback off when one exists. The
 footer shows the commit it was built from. The page loads no third-party origin, so a
 visitor on IPFS gets a self-contained site.
+
+The build also writes two things that listing sites and wallets read from the site:
+
+- `brand/`: the official marks, copied from the repository's `brand/` folder (`gsusd.svg`,
+  `gsusd-32.png` to `gsusd-512.png`, `protocol.svg`, `protocol-256.png`, `protocol-512.png`).
+  Their paths do not change between builds, so a listing can point at them.
+- `tokenlist.json`, in a mainnet build only: GSUSD in the Token Lists format, with the address
+  from `VITE_GUSD_ADDRESS` and the day of the commit as its timestamp. Its version is
+  `TOKEN_LIST_VERSION` in `libs/constants/src/lib/tokenList.ts`; raise it when the listed
+  details change.
+
+One optional line in the dapp block turns on the "Buy GSUSD on Uniswap" link on the swap page:
+`VITE_GSUSD_MARKET_TOKEN=<the token GSUSD is paired with>`, for the GSUSD/USDC pool
+`0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` (mainnet USDC). Set it only once that pool holds
+liquidity; without it the page shows no link. It is a link to Uniswap's own site and has
+nothing to do with the market tab (`VITE_UNISWAP_ROUTER` and `VITE_UNISWAP_QUOTER`), which
+stays off.
 
 ### 4.4 Put it on IPFS behind the ENS name
 
@@ -736,19 +753,44 @@ gateway honours `_redirects` has not been verified. If a deep link returns 404 t
 announce the address: the IPFS build then needs `HashRouter`, which is a code change and a
 new build.
 
-Record the commit and the CID together in the release notes. The build expects to sit at
+Pinata's pin-by-CID call (the `ipfs pin remote add` line above) needs a paid plan. On a free
+plan upload the build instead: export it once with `ipfs dag export <cid> > build.car`, send
+the CAR file to a Filebase bucket with the `x-amz-meta-import: car` header, and send the
+folder to Pinata with `pinFileToIPFS` and `cidVersion` 1. Both must answer with the CID Kubo
+printed; a different one means the upload was not the same build.
+
+Record the commit and the CID together in the release notes. The builds published so far:
+
+| Date | Public commit | Footer | CID |
+| --- | --- | --- | --- |
+| 2026-11-27 | `05f2e37064d27762033fa71ee377b67fdb33a83b` | `05f2e37064` | `bafybeihzxintmewtjoln5hlswyyqheiqppjaqjpp4f2mhrdwc43wk7xfhi` |
+| 2026-11-27 | `726520f9f27f87e34f36f0efe11c5b8b38f01462` | `726520f9f2` | `bafybeigvdu23a3kupvhd2pnpuhbgp5bq46avrxfphlq6i7xhhr7exfq35e` |
+
+The ENS record names the second. The build expects to sit at
 an origin root, which an ENS gateway or the mirror provides. It does not work under a path
 such as `/ipfs/<cid>/` on a general gateway, where its routes and asset paths do not
 resolve.
 
 ### 4.5 The DNS mirror
 
-A Cloudflare Pages project from the public repository: build command `npx nx build dapp`,
-output `dist/apps/dapp`, the dapp block as environment variables (the build commit comes
-from git on its own; addresses are read trimmed and checked as in section 4.4). Custom domain `goldstandard.finance`, DNSSEC on at the registrar, the
-registry lock on. The `_headers` file ships with the build and sets the content security
-policy, which allows no script that was not in the published build. Cloudflare Pages may
-log the `_redirects` rule as a loop and ignore it; its own single-page fallback then applies.
+The mirror is the same `dist/apps/dapp` folder that was pinned, byte for byte, served as
+static files by the Caddy that already runs on the API server (section 4.6), with Cloudflare
+in front of it. Copy the folder to a directory named after the build commit, compare a hash
+of every file with the pinned build, and point the served path at it with a symbolic link, so
+a release is one switch and the previous build stays beside it. Custom domain
+`goldstandard.finance`, DNSSEC on at the registrar, the registry lock on.
+
+Caddy does not read the `_headers` and `_redirects` files, so its site block does their work:
+
+- every response carries the headers `_headers` lists, the content security policy first,
+  which allows no script that was not in the published build;
+- a path that is no file answers with `index.html` (deep links and refreshes), except under
+  `/assets/`, where a missing file is a 404 and never the page;
+- `/tokenlist.json`, `/brand/*`, `/agents.json`, `/llms.txt`, `/manifest.json` and `/abi/*`
+  carry the cross-origin and cache headers `_headers` gives each of them;
+- `_headers` and `_redirects` themselves answer 404.
+
+After each release, compare the response headers of `/` with `_headers` line by line.
 
 The build finishes `sitemap.xml` itself: every page carries the day of the commit the
 build was made from (`VITE_BUILD_DATE=YYYY-MM-DD` on a build server without git), and a
@@ -1202,7 +1244,83 @@ GSUSD float; it never shares the first keeper's key. Start it half an interval a
 first. The same env block serves it with its own `KEEPER_PRIVATE_KEY` and its own
 `KEEPER_HEARTBEAT_URL`.
 
-### 4.8 Checks before you announce
+### 4.8 The watcher
+
+A small service that reads the chain and writes to one Telegram chat. It reports the events
+and the two thresholds that `LAUNCH.md` asks to be monitored, so it stands in for the
+hosted alert rules where those are not available. It holds no key and sends no
+transaction. Run it on the API server, never on the keeper host: the keeper host carries a
+key and nothing else.
+
+Every message starts with its severity. A `PAGE` rings the phone: a pause, a frozen token,
+bad debt, every scheduled proposal, every role grant, and a watched vault below its ratio
+floor. A `NOTE` arrives silently: mints, liquidations, reserve swaps, executed proposals,
+routing fallbacks, oracle configuration changes and the reserve coverage. A proposal whose
+call is `grantRole` carries an `ALARM` line (section 5, item 7).
+
+**The Telegram bot.** From the project's Telegram account, open a chat with `@BotFather`,
+send `/newbot` and keep the token it returns. Send the new bot any message, then open
+`https://api.telegram.org/bot<token>/getUpdates` once in a private window and read
+`chat.id` from the answer. The token is a secret: it goes in the env file and nowhere else.
+
+```bash
+sudo install -m 600 -o root -g root /dev/null /etc/gsusd/watcher.env
+sudoedit /etc/gsusd/watcher.env
+cd /srv/gsusd/src && npx nx build watcher
+```
+
+| Variable | Value |
+| --- | --- |
+| `WATCHER_RPC_URL` | One or more https endpoints, comma separated, the preferred first. It asks for logs over at most 2,000 blocks at a time, which the keyless gateway of section 1 served on launch day |
+| `WATCHER_DEPLOYMENT_FILE` | `/srv/gsusd/src/contracts/deployments/mainnet.json`. The addresses come from the snapshot; the watcher refuses to start when one is missing or the endpoint is on another chain |
+| `WATCHER_STATE_FILE` | `/var/lib/gsusd-watcher/state.json`. Where it remembers the last block it reported, so a restart neither repeats nor skips an event |
+| `TELEGRAM_BOT_TOKEN` | The token from `@BotFather` |
+| `TELEGRAM_CHAT_ID` | The chat id read above |
+| `WATCHER_VAULT_OWNERS` | Vault owners whose collateral ratio is watched, comma separated: the operations Safe |
+| `WATCHER_VAULT_RATIO_FLOOR` | Optional, default `1250000` (125%). A page below it |
+| `WATCHER_RESERVE_COVERAGE_FLOOR` | Optional, default `50000` (5% of circulating GSUSD). A note below it |
+| `WATCHER_REPEAT_SECONDS` | Optional, default `21600`. How often a threshold that stays crossed is repeated |
+| `WATCHER_POLL_SECONDS` | Optional, default `60` |
+| `WATCHER_HEARTBEAT_URL` | Optional. The https ping URL of a second hosted dead-man check, period 1 minute, grace 10 minutes. Pinged after every pass that read the chain and delivered everything it had to. Treat it as a secret |
+| `WATCHER_DRY_RUN` | Optional. `true` prints the messages to the journal and sends nothing; the two Telegram values may then be absent |
+
+```ini
+# /etc/systemd/system/gsusd-watcher.service
+[Unit]
+Description=gsUSD watcher
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+EnvironmentFile=/etc/gsusd/watcher.env
+WorkingDirectory=/srv/gsusd/src
+ExecStart=/usr/bin/node dist/apps/watcher/main.js
+StateDirectory=gsusd-watcher
+Restart=always
+RestartSec=30
+User=gsusd
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+On start it sends `NOTE: watcher started` with the head block and the number of rules. That
+message is the check that the token and the chat are right: a start that cannot deliver it
+exits, and systemd tries again every 30 seconds. A first start reports from the current
+block onward and replays nothing older.
+
+A message that cannot be delivered is not lost. The watcher stays at that block, logs
+`watcher.delivery-failed` and tries again on the next pass. A threshold that cannot be read
+is never taken for a low reading: after five failed reads in a row it is reported as
+unreadable. What the watcher cannot report is its own silence, which is what
+`WATCHER_HEARTBEAT_URL` is for.
+
+The ratio check covers the vaults named in `WATCHER_VAULT_OWNERS`. Every other vault is the
+keeper's work: it liquidates below 110% and its own dead-man check pages when it stops.
+
+### 4.9 Checks before you announce
 
 - The footer on `https://goldstandardfinance.eth.limo` and on `goldstandard.finance` shows the same commit,
   and that commit is the head of the public repository.
