@@ -36,7 +36,7 @@ export const ROUTE_DESCRIPTIONS: Readonly<Record<string, string>> = {
 	'/vault': 'Open a vault: deposit tokenised gold, mint GSUSD against it, repay and withdraw. Minting and withdrawing need a collateral ratio of at least 130%.',
 	'/vault/liquidate': 'Vaults below the 110% liquidation threshold. Anyone can repay the debt of such a vault and claim its gold at a discount.',
 	'/pool': 'Deposit GSUSD in the stability pool, which absorbs liquidated vaults. A deposit shrinks with each liquidation absorbed, is at risk and is not a savings balance.',
-	'/swap': 'Convert GSUSD to protocol-owned gold, and gold to GSUSD, through the Gold Stability Reserve that holds the peg.',
+	'/swap': 'Swap GSUSD for protocol-owned gold through the Gold Stability Reserve, at the oracle price minus a spread of 0.5% to 5%.',
 	'/transparency': 'The gold behind GSUSD, read from the contracts: collateral, supply, the peg, the reserve and the risk parameters, verifiable on-chain block by block.',
 	'/terms': 'What Gold Standard states about its software, its risks, its license and the Usage Ledger, and the conditions on which the software is offered.',
 };

@@ -85,8 +85,11 @@ describe("the token's address plan (scripts/lib/stablecoinAddress.ts)", () => {
 });
 
 describe("the token's creation code", () => {
-  it("still hashes to the value the mainnet salt was found for", async () => {
-    const { artifacts, ethers } = await import("hardhat");
-    expect(ethers.keccak256((await artifacts.readArtifact("GoldStablecoin")).bytecode)).to.equal(HASH);
+  it("still hashes to the value the mainnet salt was found for", async function () {
+    const hre = await import("hardhat");
+    // The coverage tool compiles an instrumented copy of every contract, whose creation code
+    // is not the code that is deployed; the hash is that of the ordinary build.
+    if ((hre as unknown as { __SOLIDITY_COVERAGE_RUNNING?: boolean }).__SOLIDITY_COVERAGE_RUNNING === true) this.skip();
+    expect(hre.ethers.keccak256((await hre.artifacts.readArtifact("GoldStablecoin")).bytecode)).to.equal(HASH);
   });
 });
