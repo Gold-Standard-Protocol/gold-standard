@@ -766,6 +766,7 @@ Record the commit and the CID together in the release notes. The builds publishe
 | 2026-11-27 | `05f2e37064d27762033fa71ee377b67fdb33a83b` | `05f2e37064` | `bafybeihzxintmewtjoln5hlswyyqheiqppjaqjpp4f2mhrdwc43wk7xfhi` |
 | 2026-11-27 | `726520f9f27f87e34f36f0efe11c5b8b38f01462` | `726520f9f2` | `bafybeigvdu23a3kupvhd2pnpuhbgp5bq46avrxfphlq6i7xhhr7exfq35e` |
 | 2026-11-27 | `5a6f557a3296e6e9648024b3a4a9b7544b664e40` | `5a6f557a32` | `bafybeiaham7sill2op7lau6ovg23jkmervesr7igmrhowxswcj3tesph2i` |
+| 2026-11-27 | `54a5f731236409bc03f80de7c4295059c8b0ab96` | `54a5f73123` | `bafybeihhjqp5ejjxd4rcnrv7cx5zgdm3qauvcorzt6wwq2gkofjmafruf4` |
 
 The ENS record names the latest once the owner wallet has set it; read the record to see which build the name serves. The build expects to sit at
 an origin root, which an ENS gateway or the mirror provides. It does not work under a path
@@ -871,6 +872,14 @@ oversized upload at the edge, before it holds a connection to the API. No proced
 API reads a larger body. `encode` compresses
 responses, chiefly `vaults.owners`, which returns the whole owner set to every visitor of the
 Liquidations page.
+
+**Supply figures for listing sites.** The API answers `/supply/total` and
+`/supply/circulating` with the GSUSD supply as a plain number and nothing else
+(`curl -s https://<api host>/supply/total` prints `1551`), which is the form price trackers
+poll. Both paths give the same figure: GSUSD exists only as vault debt, so none is held
+back. The figure is `totalSupply()` read through the indexer's own endpoint and vault
+address, kept for a minute; it needs no variable of its own. If the endpoint fails, the
+last good read stands in for ten minutes and after that the answer is 503.
 
 **Switch the Usage Ledger on, the same day.** `docs/TOKEN_POLICY.md` section 2 commits the
 project to a Gold Standard Usage Ledger from the first mainnet block: a record of vault

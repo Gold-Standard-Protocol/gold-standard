@@ -389,4 +389,40 @@ describe('createApp', () => {
       error.mockRestore();
     });
   });
+  describe('the supply figures', () => {
+    const supply = {
+      paths: ['/supply/total', '/supply/circulating'],
+      handler: (_req: Request, res: Response): void => {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.end('1551');
+      },
+    };
+
+    it('serves the figure at every path, also when the API serves the dapp beside them', async () => {
+      for (const options of [{ trpc, supply }, { trpc, supply, dappDist: dist }]) {
+        const base = await listen(options);
+        for (const path of supply.paths) {
+          const res = await fetch(`${base}${path}`);
+          expect(res.status).toBe(200);
+          expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8');
+          expect(await res.text()).toBe('1551');
+        }
+      }
+    });
+
+    it('is not mounted when the shell is given none', async () => {
+      const base = await listen({ trpc });
+      expect((await fetch(`${base}/supply/total`)).status).toBe(404);
+    });
+
+    it('is read only and shares the limiter with the tRPC surface', async () => {
+      const base = await listen({ trpc, supply, rateMaxRequests: 2 });
+      const refused = await fetch(`${base}/supply/total`, { method: 'POST' });
+      expect(refused.status).toBe(405);
+      expect(refused.headers.get('allow')).toBe('GET, HEAD');
+      expect((await fetch(`${base}/supply/total`)).status).toBe(200);
+      expect((await fetch(`${base}/supply/circulating`)).status).toBe(200);
+      expect((await fetch(`${base}/supply/total`)).status).toBe(429);
+    });
+  });
 });

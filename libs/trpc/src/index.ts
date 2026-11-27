@@ -24,6 +24,9 @@ export * from './lib/trpc';
 export { runShutdownTasks } from './lib/shutdown';
 export { createLedgerRecordHandlers, LEDGER_RECORD_CSV_PATH, LEDGER_RECORD_JSON_PATH } from './lib/ledger/http';
 export type { LedgerRecordHandlers } from './lib/ledger/http';
+export { createSupplyHandler, SUPPLY_CIRCULATING_PATH, SUPPLY_TOTAL_PATH } from './lib/supply/http';
+export type { SupplyHandler, SupplyReader } from './lib/supply/http';
+export { createSupplyReader } from './lib/supply/chain';
 export type { RecordSummary as LedgerRecordSummary } from './lib/ledger/record';
 export type {
   AccountResponse as LedgerAccountResponse,

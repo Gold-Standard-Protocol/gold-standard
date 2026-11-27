@@ -1,10 +1,14 @@
 import {
   appRouter,
   createLedgerRecordHandlers,
+  createSupplyHandler,
+  createSupplyReader,
   createTRPCExpressMiddleware,
   LEDGER_RECORD_CSV_PATH,
   LEDGER_RECORD_JSON_PATH,
   runShutdownTasks,
+  SUPPLY_CIRCULATING_PATH,
+  SUPPLY_TOTAL_PATH,
 } from '@goldstandard/trpc';
 
 import { createApp } from './app';
@@ -31,6 +35,13 @@ const start = (): void => {
     corsOrigins: config.corsOrigins,
     // With the ledger off both paths answer 404 and open nothing.
     ledgerRecord: { csvPath: LEDGER_RECORD_CSV_PATH, jsonPath: LEDGER_RECORD_JSON_PATH, ...createLedgerRecordHandlers() },
+    // Total and circulating supply are one figure; without the indexer's chain settings both answer 404.
+    supply: {
+      paths: [SUPPLY_TOTAL_PATH, SUPPLY_CIRCULATING_PATH],
+      handler: createSupplyHandler(createSupplyReader(process.env), {
+        onReadFailure: (error) => console.warn(`Supply read failed: ${error instanceof Error ? error.name : 'unknown error'}`),
+      }),
+    },
   });
   const server = listenApi(app, config, () => {
     console.info(`Listening at ${listeningUrl(config)}`);

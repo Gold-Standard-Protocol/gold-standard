@@ -28,6 +28,8 @@ export interface AppOptions {
    * each at its own path. Unset mounts neither (specs of the shell).
    */
   ledgerRecord?: { csvPath: string; jsonPath: string; csv: RequestHandler; json: RequestHandler };
+  /** GSUSD supply as a plain number, one handler for every path listed. Unset mounts none. */
+  supply?: { paths: readonly string[]; handler: RequestHandler };
 }
 
 export interface Api {
@@ -126,27 +128,37 @@ const trpcChain = (options: AppOptions, limiter: RateLimiter): readonly RequestH
 ];
 
 /**
- * The ledger's download, mounted before the dapp so the page shell never answers for it. It
- * is read only: GET and HEAD pass, behind the same limiter and with the same HSTS and CORS
- * as the tRPC surface, and every other method is refused.
+ * The chain in front of a read-only download: GET and HEAD pass, behind the same limiter
+ * and with the same HSTS and CORS as the tRPC surface, and every other method is refused.
  */
-const mountLedgerRecord = (app: Express, options: AppOptions, limiter: RateLimiter): void => {
-  const record = options.ledgerRecord;
-  if (record === undefined) return;
+const readOnlyChain = (options: AppOptions, limiter: RateLimiter, handler: RequestHandler): RequestHandler[] => {
   const readOnly = (req: Request, res: Response, next: NextFunction): void => {
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
     res.setHeader('Allow', 'GET, HEAD');
     res.status(405).json({ error: 'Method not allowed' });
   };
-  const chain = (handler: RequestHandler): RequestHandler[] => [
+  return [
     trpcHsts,
     ...(options.corsOrigins ? [createCors(options.corsOrigins)] : []),
     readOnly,
     limiter.handle,
     catchRejections(handler),
   ];
-  app.all(record.csvPath, ...chain(record.csv));
-  app.all(record.jsonPath, ...chain(record.json));
+};
+
+/** The ledger's download, mounted before the dapp so the page shell never answers for it. */
+const mountLedgerRecord = (app: Express, options: AppOptions, limiter: RateLimiter): void => {
+  const record = options.ledgerRecord;
+  if (record === undefined) return;
+  app.all(record.csvPath, ...readOnlyChain(options, limiter, record.csv));
+  app.all(record.jsonPath, ...readOnlyChain(options, limiter, record.json));
+};
+
+/** The supply figures, mounted before the dapp for the same reason. */
+const mountSupply = (app: Express, options: AppOptions, limiter: RateLimiter): void => {
+  const supply = options.supply;
+  if (supply === undefined) return;
+  for (const path of supply.paths) app.all(path, ...readOnlyChain(options, limiter, supply.handler));
 };
 
 const clientErrorStatus = (error: unknown): number | undefined => {
@@ -176,6 +188,7 @@ export function createApp(options: AppOptions): Api {
   const limiter = createRateLimiter({ maxRequests: options.rateMaxRequests ?? DEFAULT_RATE_MAX_REQUESTS });
   app.use('/trpc', ...trpcChain(options, limiter));
   mountLedgerRecord(app, options, limiter);
+  mountSupply(app, options, limiter);
   if (options.dappDist) serveDapp(app, options.dappDist);
   app.use(answerFailure);
   return {
