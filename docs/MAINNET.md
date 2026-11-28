@@ -1257,7 +1257,7 @@ first. The same env block serves it with its own `KEEPER_PRIVATE_KEY` and its ow
 ### 4.8 The watcher
 
 A small service that reads the chain and writes to one Telegram chat. It reports the events
-and the two thresholds that `LAUNCH.md` asks to be monitored, so it stands in for the
+and the thresholds that `LAUNCH.md` asks to be monitored, so it stands in for the
 hosted alert rules where those are not available. It holds no key and sends no
 transaction. Run it on the API server, never on the keeper host: the keeper host carries a
 key and nothing else.
@@ -1329,6 +1329,12 @@ unreadable. What the watcher cannot report is its own silence, which is what
 
 The ratio check covers the vaults named in `WATCHER_VAULT_OWNERS`. Every other vault is the
 keeper's work: it liquidates below 110% and its own dead-man check pages when it stops.
+
+A third check pages when the stability pool holds less of a gold token than it has
+recorded (`balanceOf` of the pool against `collateralAccounted`), which is what an issuer
+wiping the pool's balance looks like. The pool rewrites that record at its next absorption
+or claim, so the page is the moment to act: read `THREAT_MODEL.md` on issuer intervention
+before any liquidation goes through the pool.
 
 ### 4.9 Checks before you announce
 

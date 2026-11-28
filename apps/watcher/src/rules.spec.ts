@@ -52,9 +52,9 @@ describe('watched events', () => {
 });
 
 describe('rules', () => {
-  it('numbers the event rules 1 to 14 and counts the two threshold rules', () => {
+  it('numbers the event rules 1 to 14 and counts the three threshold rules', () => {
     expect(EVENT_RULES.map((rule) => rule.id)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
-    expect(RULE_COUNT).toBe(16);
+    expect(RULE_COUNT).toBe(17);
   });
 
   it('uses every watched event in some rule and only known contracts', () => {

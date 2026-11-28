@@ -100,10 +100,11 @@ export const EVENT_RULES: readonly EventRule[] = [
   { id: 14, severity: 'note', contracts: ['oracle'], events: ['TokenUnfrozen', 'FeedUpdated', 'AnchorFeedUpdated'], meaning: 'Oracle configuration changed.' },
 ];
 
-/** Ids of the two threshold rules, numbered after the event rules. */
+/** Ids of the three threshold rules, numbered after the event rules. */
 export const VAULT_RATIO_RULE_ID = 15;
 export const RESERVE_COVERAGE_RULE_ID = 16;
-export const RULE_COUNT = EVENT_RULES.length + 2;
+export const POOL_HOLDINGS_RULE_ID = 17;
+export const RULE_COUNT = EVENT_RULES.length + 3;
 
 export const findEventRule = (contract: ContractKey, event: string): EventRule | undefined =>
   EVENT_RULES.find((rule) => rule.contracts.includes(contract) && (rule.events as readonly string[]).includes(event));
@@ -121,4 +122,7 @@ export const GRANT_ROLE_SELECTOR = '0x2f2ff15d';
 export const READ_ABI = parseAbi([
   'function getCollateralisationRatio(address user) view returns (uint256)',
   'function coveragePpm() view returns (uint256)',
+  'function getSupportedTokens() view returns (address[])',
+  'function collateralAccounted(address token) view returns (uint256)',
+  'function balanceOf(address account) view returns (uint256)',
 ]);

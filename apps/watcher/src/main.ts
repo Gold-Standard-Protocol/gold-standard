@@ -7,8 +7,10 @@ import { parseDeployment } from './deployment';
 import { createFileStateStore } from './fileStateStore';
 import type { WatchedLog } from './format';
 import { createHeartbeat } from './heartbeat';
+import { FULLY_HELD_PPM, lowestHeldShare } from './poolHoldings';
 import {
   CONTRACT_KEYS,
+  POOL_HOLDINGS_RULE_ID,
   READ_ABI,
   RESERVE_COVERAGE_RULE_ID,
   RULE_COUNT,
@@ -21,7 +23,7 @@ import type { ThresholdCheck } from './thresholds';
 import { runTick } from './tick';
 
 // Watcher bootstrap: the only place process.env is read. The watcher holds no key and sends
-// no transaction; it reads logs and two view functions and writes to one Telegram chat. The
+// no transaction; it reads logs and a few view functions and writes to one Telegram chat. The
 // RPC URLs, the bot token and the heartbeat URL are never logged: every error passes through
 // describeError, which cuts URLs to their host and removes anything shaped like a bot token.
 
@@ -67,6 +69,25 @@ const main = async (): Promise<void> => {
       }));
   };
 
+  const pool = deployment.addresses.stabilityPool;
+  const readPoolHoldings = async (): Promise<bigint> => {
+    const tokens = await client.readContract({
+      address: deployment.addresses.oracle,
+      abi: READ_ABI,
+      functionName: 'getSupportedTokens',
+    });
+    const holdings = await Promise.all(
+      tokens.map(async (token) => {
+        const [held, recorded] = await Promise.all([
+          client.readContract({ address: token, abi: READ_ABI, functionName: 'balanceOf', args: [pool] }),
+          client.readContract({ address: pool, abi: READ_ABI, functionName: 'collateralAccounted', args: [token] }),
+        ]);
+        return { held, recorded };
+      })
+    );
+    return lowestHeldShare(holdings);
+  };
+
   const checks: ThresholdCheck[] = [
     ...config.vaultOwners.map(
       (owner): ThresholdCheck => ({
@@ -91,6 +112,14 @@ const main = async (): Promise<void> => {
       subject: 'The reserve coverage of circulating GSUSD',
       floor: config.reserveCoverageFloor,
       read: () => client.readContract({ address: deployment.addresses.reserve, abi: READ_ABI, functionName: 'coveragePpm' }),
+    },
+    {
+      key: 'pool-holdings',
+      ruleId: POOL_HOLDINGS_RULE_ID,
+      severity: 'page',
+      subject: 'The gold the stability pool holds, as a share of the gold it has recorded,',
+      floor: FULLY_HELD_PPM,
+      read: readPoolHoldings,
     },
   ];
 
