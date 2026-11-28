@@ -101,8 +101,7 @@ export const TRUST_SIGNALS: TrustSignal[] = [
   },
   {
     title: 'Time-locked governance',
-    detail:
-      'Parameter changes wait out an on-chain timelock, 48 hours at launch. The guardian can only stop things: pause, extend a pause and freeze one token, a freeze it can also lift. It can never unpause, change a parameter or move funds.',
+    detail: 'Parameter changes wait out an on-chain timelock, 48 hours at launch.',
   },
 ];
 
